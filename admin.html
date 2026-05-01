@@ -6,12 +6,15 @@
   <title>Belladonna Training — Admin</title>
   <link rel="stylesheet" href="style.css"/>
   <style>
-    .tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:2rem;}
+    /* ── Tabs ── */
+    .tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:0;}
     .tab{padding:12px 24px;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-family:var(--cinzel);cursor:pointer;border:none;background:transparent;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;}
     .tab:hover{color:var(--text2);}
     .tab.active{color:var(--gold);border-bottom-color:var(--gold);}
     .tab-panel{display:none;}
     .tab-panel.active{display:block;}
+
+    /* ── Trainees ── */
     .trainee-row{background:var(--surface);border-bottom:1px solid var(--border);}
     .trainee-header{padding:1rem 1.5rem;display:flex;align-items:center;gap:1rem;cursor:pointer;transition:background .15s;}
     .trainee-header:hover{background:var(--surface2);}
@@ -21,49 +24,84 @@
     .detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;}
     .detail-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;}
     .detail-card-label{font-family:var(--cinzel);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;}
-    .quiz-line{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);font-family:var(--font);}
+    .quiz-line{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);}
     .quiz-line:last-child{border-bottom:none;}
     .chevron{font-size:12px;color:var(--text3);transition:transform .18s;flex-shrink:0;}
     .chevron.open{transform:rotate(180deg);}
     .add-trainee-form{background:var(--surface);border:1px solid var(--gold-border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:2rem;}
-    .add-trainee-form h3{font-family:var(--display);font-size:1.4rem;letter-spacing:.06em;margin-bottom:1rem;}
     .form-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:flex-end;}
     @media(max-width:700px){.form-row{grid-template-columns:1fr;}}
     .form-field{display:flex;flex-direction:column;}
-    .module-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.5rem;}
-    .mod-tab{padding:6px 16px;border-radius:99px;font-family:var(--cinzel);font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text3);transition:all .15s;}
-    .mod-tab:hover{border-color:var(--gold-border);color:var(--gold);}
-    .mod-tab.active{background:var(--gold-dim);border-color:var(--gold-border2);color:var(--gold2);}
+
+    /* ── Content editor layout ── */
+    .content-layout{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 130px);border-top:1px solid var(--border);}
+
+    /* ── Content sidebar ── */
+    .content-sidebar{background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;position:sticky;top:0;max-height:calc(100vh - 130px);}
+    .cs-header{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+    .cs-label{font-family:var(--cinzel);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);}
+    .cs-add-btn{width:20px;height:20px;border-radius:50%;background:var(--gold-dim);border:1px solid var(--gold-border);color:var(--gold);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0;transition:all .15s;}
+    .cs-add-btn:hover{background:var(--gold);color:#000;}
+
+    /* Module rows in sidebar */
+    .cs-mod{border-bottom:1px solid var(--border);}
+    .cs-mod-row{display:flex;align-items:center;gap:6px;padding:8px 10px;cursor:pointer;transition:background .15s;user-select:none;}
+    .cs-mod-row:hover{background:var(--surface2);}
+    .cs-mod-row.active{background:var(--surface2);border-left:2px solid var(--gold);}
+    .cs-mod-row.drag-over{background:var(--gold-dim);}
+    .cs-drag{color:var(--text3);font-size:13px;cursor:grab;flex-shrink:0;padding:2px;}
+    .cs-drag:active{cursor:grabbing;}
+    .cs-num{font-family:var(--cinzel);font-size:10px;font-weight:600;color:var(--text3);width:22px;flex-shrink:0;text-align:center;}
+    .cs-title{flex:1;font-family:var(--cinzel);font-size:11px;font-weight:600;letter-spacing:.03em;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .cs-title.active{color:var(--gold);}
+    .cs-chevron{font-size:10px;color:var(--text3);transition:transform .15s;flex-shrink:0;}
+    .cs-chevron.open{transform:rotate(180deg);}
+    .cs-mod-actions{display:flex;gap:4px;flex-shrink:0;}
+    .cs-icon-btn{background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;padding:2px 4px;border-radius:4px;transition:all .15s;line-height:1;}
+    .cs-icon-btn:hover{color:var(--gold);background:var(--gold-dim);}
+    .cs-icon-btn.del:hover{color:var(--danger);background:var(--danger-bg);}
+
+    /* Sub-module rows */
+    .cs-sub-list{display:none;background:var(--bg);}
+    .cs-sub-list.open{display:block;}
+    .cs-sub-row{display:flex;align-items:center;gap:6px;padding:7px 10px 7px 28px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border);user-select:none;}
+    .cs-sub-row:last-child{border-bottom:none;}
+    .cs-sub-row:hover{background:var(--surface2);}
+    .cs-sub-row.active{background:var(--surface2);border-left:2px solid var(--gold-border);}
+    .cs-sub-dot{width:5px;height:5px;border-radius:50%;background:var(--text3);flex-shrink:0;}
+    .cs-sub-dot.active{background:var(--gold);}
+    .cs-sub-title{flex:1;font-family:var(--font);font-size:12px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .cs-sub-title.active{color:var(--text);}
+
+    /* ── Editor panel ── */
+    .editor-panel{padding:1.5rem;overflow-y:auto;max-height:calc(100vh - 130px);}
+    .editor-heading{font-family:var(--display);font-size:1.6rem;letter-spacing:.06em;margin-bottom:4px;}
+    .editor-subhead{font-family:var(--cinzel);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:1.5rem;}
     .editor-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:1rem;overflow:hidden;}
-    .editor-section-header{padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-    .editor-section-title{font-family:var(--cinzel);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text2);}
+    .editor-section-header{padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+    .editor-section-title{font-family:var(--cinzel);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text2);}
     .editor-section-body{padding:1rem;}
     .item-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px;display:flex;gap:8px;align-items:flex-start;}
     .item-card.dragging{opacity:.4;}
     .item-fields{flex:1;display:flex;flex-direction:column;gap:6px;}
-    .drag-handle{cursor:grab;color:var(--text3);padding:6px 4px;font-size:16px;flex-shrink:0;user-select:none;}
+    .drag-handle{cursor:grab;color:var(--text3);padding:4px;font-size:14px;flex-shrink:0;user-select:none;}
     .drag-handle:active{cursor:grabbing;}
     .option-row{display:flex;gap:6px;align-items:center;margin-bottom:6px;}
-    .option-row input[type=text]{flex:1;}
     .correct-radio{width:16px;height:16px;accent-color:var(--gold);flex-shrink:0;cursor:pointer;}
     .add-item-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;font-size:10px;font-family:var(--cinzel);letter-spacing:.1em;text-transform:uppercase;color:var(--gold);border:1px dashed var(--gold-border);background:var(--gold-dim);border-radius:var(--radius);cursor:pointer;transition:all .15s;width:100%;justify-content:center;margin-top:4px;}
     .add-item-btn:hover{background:rgba(201,168,76,.18);}
-    .save-bar{position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--border);padding:1rem 0;margin-top:1rem;display:flex;justify-content:flex-end;gap:10px;align-items:center;}
+    .save-bar{position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--border);padding:.75rem 0;margin-top:1rem;display:flex;justify-content:flex-end;gap:10px;align-items:center;}
     .save-status{font-family:var(--cinzel);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);}
     .save-status.saved{color:var(--success);}
-    .delete-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:4px 6px;flex-shrink:0;transition:color .15s;}
+    .delete-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;padding:4px 6px;flex-shrink:0;transition:color .15s;}
     .delete-btn:hover{color:var(--danger);}
     .youtube-preview{margin-top:8px;border-radius:var(--radius);overflow:hidden;}
     .youtube-preview iframe{width:100%;aspect-ratio:16/9;border:none;display:block;}
-    .img-preview{margin-top:8px;border-radius:var(--radius);overflow:hidden;max-height:200px;}
+    .img-preview{margin-top:8px;border-radius:var(--radius);overflow:hidden;max-height:180px;}
     .img-preview img{width:100%;object-fit:cover;display:block;}
-    .submod-card{background:var(--surface);border:1px solid var(--gold-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;}
-    .submod-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;cursor:pointer;}
-    .submod-card-title{font-family:var(--cinzel);font-size:12px;letter-spacing:.08em;font-weight:600;color:var(--gold2);}
-    .submod-body{display:none;}
-    .submod-body.open{display:block;}
-    .input-std{background:var(--surface);border:1px solid var(--gold-border);border-radius:var(--radius);padding:10px;color:var(--text);font-family:var(--font);font-size:14px;width:100%;}
-    .textarea-std{background:var(--surface);border:1px solid var(--gold-border);border-radius:var(--radius);padding:10px;color:var(--text);font-family:var(--font);font-size:14px;width:100%;resize:vertical;min-height:80px;}
+    .input-std{background:var(--surface);border:1px solid var(--gold-border);border-radius:var(--radius);padding:9px 12px;color:var(--text);font-family:var(--font);font-size:14px;width:100%;}
+    .textarea-std{background:var(--surface);border:1px solid var(--gold-border);border-radius:var(--radius);padding:9px 12px;color:var(--text);font-family:var(--font);font-size:14px;width:100%;resize:vertical;min-height:80px;}
+    .empty-editor{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;color:var(--text3);font-family:var(--serif);font-style:italic;text-align:center;gap:1rem;}
   </style>
 </head>
 <body>
@@ -71,48 +109,65 @@
   <div class="loading-wrap" id="loading"><div class="spinner"></div><p>Loading admin...</p></div>
 
   <main id="main" style="display:none;">
-    <div class="page-wrap-wide">
-      <div class="fade-up" style="margin-bottom:1.5rem;">
-        <p style="font-family:var(--cinzel);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;font-style:normal;">Admin Panel</p>
+    <div style="max-width:1200px;margin:0 auto;padding:1.5rem 1.5rem 0;">
+      <div class="fade-up" style="margin-bottom:1rem;">
+        <p style="font-family:var(--cinzel);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;font-style:normal;">Admin Panel</p>
         <h1 class="gold-text">Training Management</h1>
       </div>
-
       <div class="tabs">
         <button class="tab active" onclick="switchTab('trainees')">Trainees</button>
         <button class="tab" onclick="switchTab('content')">Module Content</button>
       </div>
+    </div>
 
-      <div class="tab-panel active" id="tab-trainees">
-        <div id="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:2rem;"></div>
-        <div class="add-trainee-form fade-up">
-          <h3>Add New Trainee</h3>
-          <div class="form-row">
-            <div class="form-field"><label>Full name</label><input type="text" id="new-name" placeholder="Jordan Smith"/></div>
-            <div class="form-field"><label>Email address</label><input type="email" id="new-email" placeholder="jordan@belladonna.com"/></div>
-            <div class="form-field"><label>Temporary password</label><input type="text" id="new-password" placeholder="Min 6 characters"/></div>
-            <div class="form-field"><label style="opacity:0;">x</label><button class="btn btn-primary" id="add-trainee-btn" onclick="handleAddTrainee()">Add Trainee</button></div>
-          </div>
-          <div id="add-trainee-error" style="display:none;margin-top:10px;" class="error-msg"></div>
+    <!-- TRAINEES TAB -->
+    <div class="tab-panel active" id="tab-trainees" style="padding:1.5rem;max-width:1200px;margin:0 auto;">
+      <div id="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:2rem;"></div>
+      <div class="add-trainee-form fade-up">
+        <h3 style="font-family:var(--display);font-size:1.4rem;letter-spacing:.06em;margin-bottom:1rem;">Add New Trainee</h3>
+        <div class="form-row">
+          <div class="form-field"><label>Full name</label><input type="text" id="new-name" placeholder="Jordan Smith" class="input-std"/></div>
+          <div class="form-field"><label>Email</label><input type="email" id="new-email" placeholder="jordan@belladonna.com" class="input-std"/></div>
+          <div class="form-field"><label>Temp password</label><input type="text" id="new-password" placeholder="Min 6 chars" class="input-std"/></div>
+          <div class="form-field"><label style="opacity:0;">x</label><button class="btn btn-primary" id="add-trainee-btn" onclick="handleAddTrainee()">Add Trainee</button></div>
         </div>
-        <div class="card fade-up" style="padding:0;overflow:hidden;">
-          <div style="padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
-            <h3>All Trainees</h3><span id="trainee-count" class="text-muted"></span>
-          </div>
-          <div id="trainee-list"></div>
-        </div>
+        <div id="add-trainee-error" style="display:none;margin-top:10px;" class="error-msg"></div>
       </div>
+      <div class="card fade-up" style="padding:0;overflow:hidden;">
+        <div style="padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+          <h3>All Trainees</h3><span id="trainee-count" class="text-muted"></span>
+        </div>
+        <div id="trainee-list"></div>
+      </div>
+    </div>
 
-      <div class="tab-panel" id="tab-content">
-        <div class="module-nav" id="module-nav"></div>
-        <div id="module-editor"></div>
+    <!-- CONTENT TAB -->
+    <div class="tab-panel" id="tab-content">
+      <div class="content-layout">
+        <!-- Content sidebar -->
+        <div class="content-sidebar">
+          <div class="cs-header">
+            <span class="cs-label">Modules</span>
+            <button class="cs-add-btn" title="Add new module" onclick="addModule()">+</button>
+          </div>
+          <div id="cs-module-list"></div>
+        </div>
+        <!-- Editor panel -->
+        <div class="editor-panel" id="editor-panel">
+          <div class="empty-editor">
+            <div style="font-size:2rem;">✦</div>
+            <p>Select a module or sub-module<br>from the sidebar to edit.</p>
+          </div>
+        </div>
       </div>
     </div>
   </main>
+
   <div class="toast-wrap" id="toast-wrap"></div>
 
   <script type="module">
     import { requireAdmin, renderNav, doLogout, db, showToast, adminSignOffFn, revokeSignOffFn, createTrainee } from "./firebase-init.js";
-    import { collection, getDocs, doc, getDoc, setDoc, deleteDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { collection, getDocs, doc, getDoc, setDoc, deleteDoc, serverTimestamp, query, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     window._logout = doLogout;
 
@@ -122,24 +177,25 @@
       {key:"shadowGigComplete",label:"Shadow Gig",dateKey:"shadowGigDate"},
       {key:"soloLaunchComplete",label:"Solo Launch",dateKey:"soloLaunchDate"},
     ];
-    const MODULE_DEFS = [
-      {id:"module_1",label:"Module 1"},{id:"module_2",label:"Module 2"},
-      {id:"module_3",label:"Module 3"},{id:"module_4",label:"Module 4"},
-      {id:"module_5",label:"Module 5"},{id:"module_6",label:"Module 6"},
-    ];
 
     let allTrainees=[], certMap={}, progressMap={};
-    let currentModuleId="module_1";
-    let moduleData={}, videosData=[], contentBlocksData=[], questionsData=[], submodulesData=[];
-    let dragSrc=null;
 
+    // All modules data (array, ordered)
+    let modulesData = []; // [{id, title, description, content, bannerImage, passingScore, totalQuestions, order, submodules:[], videos:[], questions:[], _open:bool}]
+    let activeModuleIdx = null;
+    let activeSubmoduleIdx = null; // null = editing parent module
+    let activeView = null; // 'module' | 'submodule'
+    let dragSrc = null, dragType = null;
+
+    // ── Tab switch ────────────────────────────────────────────────────────────
     window.switchTab = function(tab) {
       document.querySelectorAll(".tab").forEach((t,i)=>t.classList.toggle("active",["trainees","content"][i]===tab));
       document.querySelectorAll(".tab-panel").forEach(p=>p.classList.remove("active"));
       document.getElementById(`tab-${tab}`).classList.add("active");
-      if (tab==="content"&&!document.getElementById("module-nav").innerHTML){buildModuleNav();loadModuleContent("module_1");}
+      if (tab==="content" && modulesData.length===0) loadAllModules();
     };
 
+    // ── Init ──────────────────────────────────────────────────────────────────
     requireAdmin(async (user, profile) => {
       document.getElementById("nav-placeholder").innerHTML = renderNav(profile, true);
       await loadTrainees();
@@ -147,7 +203,620 @@
       document.getElementById("main").style.display="block";
     });
 
-    // ── Add trainee ───────────────────────────────────────────────────────────
+    // ── Load all modules ──────────────────────────────────────────────────────
+    async function loadAllModules() {
+      const panel = document.getElementById("cs-module-list");
+      panel.innerHTML=`<div style="padding:1rem;text-align:center;"><div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0 auto;"></div></div>`;
+      const snap = await getDocs(query(collection(db,"modules"),orderBy("order")));
+      modulesData = await Promise.all(snap.docs.map(async d => {
+        const m = {id:d.id,...d.data(),_open:false};
+        await loadModuleSubdata(m);
+        return m;
+      }));
+      renderSidebar();
+    }
+
+    async function loadModuleSubdata(m) {
+      const [vidSnap,queSnap,subSnap] = await Promise.all([
+        getDocs(query(collection(db,"modules",m.id,"videos"),orderBy("order"))).catch(()=>({docs:[]})),
+        getDocs(query(collection(db,"modules",m.id,"questions"),orderBy("order"))).catch(()=>({docs:[]})),
+        getDocs(query(collection(db,"modules",m.id,"submodules"),orderBy("order"))).catch(()=>({docs:[]})),
+      ]);
+      m.videos = vidSnap.docs.map(d=>({id:d.id,...d.data()}));
+      m.questions = queSnap.docs.map(d=>({id:d.id,...d.data()}));
+      m.contentBlocks = (m.content||"").split("\n\n").filter(b=>b.trim()).map((b,i)=>({tempId:`b${i}`,text:b.trim()}));
+      m.submodules = await Promise.all(subSnap.docs.map(async sd=>{
+        const sub={id:sd.id,...sd.data()};
+        const [svSnap,siSnap]=await Promise.all([
+          getDocs(query(collection(db,"modules",m.id,"submodules",sd.id,"videos"),orderBy("order"))).catch(()=>({docs:[]})),
+          getDocs(query(collection(db,"modules",m.id,"submodules",sd.id,"images"),orderBy("order"))).catch(()=>({docs:[]})),
+        ]);
+        sub.videos=svSnap.docs.map(v=>({id:v.id,...v.data()}));
+        sub.images=siSnap.docs.map(i=>({id:i.id,...i.data()}));
+        sub.contentBlocks=(sub.content||"").split("\n\n").filter(b=>b.trim()).map((b,i)=>({tempId:`sb${i}`,text:b.trim()}));
+        return sub;
+      }));
+    }
+
+    // ── Sidebar ───────────────────────────────────────────────────────────────
+    function renderSidebar() {
+      const list = document.getElementById("cs-module-list");
+      list.innerHTML = "";
+      modulesData.forEach((mod, mi) => {
+        const isActiveMod = activeView==="module" && activeModuleIdx===mi;
+        const modDiv = document.createElement("div");
+        modDiv.className = "cs-mod";
+        modDiv.dataset.mi = mi;
+
+        // Module row
+        const row = document.createElement("div");
+        row.className = `cs-mod-row ${isActiveMod?"active":""}`;
+        row.draggable = true;
+        row.dataset.mi = mi;
+        row.innerHTML = `
+          <span class="cs-drag" title="Drag to reorder">⠿</span>
+          <span class="cs-num">${mi+1}</span>
+          <span class="cs-title ${isActiveMod?"active":""}">${mod.title||"Untitled module"}</span>
+          <span class="cs-mod-actions">
+            <button class="cs-icon-btn" title="Add sub-module" onclick="event.stopPropagation();addSubmodule(${mi})">+</button>
+            <button class="cs-icon-btn del" title="Delete module" onclick="event.stopPropagation();deleteModule(${mi})">✕</button>
+          </span>
+          <span class="cs-chevron ${mod._open?"open":""}" id="cs-chev-${mi}">▾</span>`;
+        row.addEventListener("click", ()=>selectModule(mi));
+        addSidebarDrag(row, mi);
+        modDiv.appendChild(row);
+
+        // Sub-module list
+        const subList = document.createElement("div");
+        subList.className = `cs-sub-list ${mod._open?"open":""}`;
+        subList.id = `cs-sublist-${mi}`;
+
+        (mod.submodules||[]).forEach((sub,si) => {
+          const isActiveSub = activeView==="submodule" && activeModuleIdx===mi && activeSubmoduleIdx===si;
+          const subRow = document.createElement("div");
+          subRow.className = `cs-sub-row ${isActiveSub?"active":""}`;
+          subRow.innerHTML = `
+            <span class="cs-drag" style="font-size:11px;" title="Drag to reorder">⠿</span>
+            <span class="cs-sub-dot ${isActiveSub?"active":""}"></span>
+            <span class="cs-sub-title ${isActiveSub?"active":""}">${sub.order?sub.order+" — ":""}${sub.title||"Untitled"}</span>
+            <button class="cs-icon-btn del" title="Delete" onclick="event.stopPropagation();deleteSubmodule(${mi},${si})">✕</button>`;
+          subRow.addEventListener("click", ()=>selectSubmodule(mi,si));
+          subList.appendChild(subRow);
+        });
+
+        modDiv.appendChild(subList);
+        list.appendChild(modDiv);
+      });
+    }
+
+    // ── Sidebar drag to reorder modules ───────────────────────────────────────
+    function addSidebarDrag(row, mi) {
+      row.addEventListener("dragstart", e=>{
+        dragSrc=row; dragType="module";
+        e.dataTransfer.effectAllowed="move";
+        e.dataTransfer.setData("text/plain", mi);
+        setTimeout(()=>row.style.opacity="0.4",0);
+      });
+      row.addEventListener("dragend", ()=>{ row.style.opacity="1"; dragSrc=null; });
+      row.addEventListener("dragover", e=>{ e.preventDefault(); row.closest(".cs-mod").classList.add("drag-over"); });
+      row.addEventListener("dragleave", ()=>row.closest(".cs-mod").classList.remove("drag-over"));
+      row.addEventListener("drop", e=>{
+        e.preventDefault();
+        row.closest(".cs-mod").classList.remove("drag-over");
+        if (!dragSrc || dragType!=="module") return;
+        const fromIdx = parseInt(e.dataTransfer.getData("text/plain"));
+        const toIdx = mi;
+        if (fromIdx===toIdx) return;
+        const item = modulesData.splice(fromIdx,1)[0];
+        modulesData.splice(toIdx,0,item);
+        // Update order numbers
+        modulesData.forEach((m,i)=>m.order=i+1);
+        // If active module moved, update index
+        if (activeModuleIdx===fromIdx) activeModuleIdx=toIdx;
+        else if (activeModuleIdx>fromIdx && activeModuleIdx<=toIdx) activeModuleIdx--;
+        else if (activeModuleIdx<fromIdx && activeModuleIdx>=toIdx) activeModuleIdx++;
+        renderSidebar();
+        showToast("Reordered — click Save to persist.","info");
+      });
+    }
+
+    // ── Select module / submodule ─────────────────────────────────────────────
+    function selectModule(mi) {
+      // Toggle open/close
+      if (activeView==="module" && activeModuleIdx===mi) {
+        modulesData[mi]._open = !modulesData[mi]._open;
+        renderSidebar();
+        return;
+      }
+      // Close previously open
+      if (activeModuleIdx!==null && activeModuleIdx!==mi) modulesData[activeModuleIdx]._open=false;
+      activeModuleIdx = mi;
+      activeSubmoduleIdx = null;
+      activeView = "module";
+      modulesData[mi]._open = true;
+      renderSidebar();
+      renderModuleEditor(mi);
+    }
+
+    window.selectSubmodule = function(mi, si) {
+      activeModuleIdx = mi;
+      activeSubmoduleIdx = si;
+      activeView = "submodule";
+      renderSidebar();
+      renderSubmoduleEditor(mi, si);
+    };
+
+    // ── Add / delete module ───────────────────────────────────────────────────
+    window.addModule = function() {
+      const newId = `module_${Date.now()}`;
+      const newOrder = modulesData.length + 1;
+      modulesData.push({
+        id:newId, title:"New Module", description:"", content:"", bannerImage:"",
+        passingScore:4, totalQuestions:5, order:newOrder,
+        contentBlocks:[], videos:[], questions:[], submodules:[], _open:true, _new:true
+      });
+      activeModuleIdx = modulesData.length-1;
+      activeSubmoduleIdx = null;
+      activeView = "module";
+      renderSidebar();
+      renderModuleEditor(activeModuleIdx);
+      showToast("New module added — fill in details and save.","info");
+    };
+
+    window.deleteModule = async function(mi) {
+      if (!confirm(`Delete "${modulesData[mi].title||"this module"}" and all its content?`)) return;
+      const mod = modulesData[mi];
+      if (!mod._new) {
+        // Delete from Firestore
+        try {
+          const subSnap = await getDocs(collection(db,"modules",mod.id,"submodules"));
+          for (const sd of subSnap.docs) {
+            const svSnap=await getDocs(collection(db,"modules",mod.id,"submodules",sd.id,"videos"));
+            const siSnap=await getDocs(collection(db,"modules",mod.id,"submodules",sd.id,"images"));
+            await Promise.all([...svSnap.docs,...siSnap.docs].map(d=>deleteDoc(d.ref)));
+            await deleteDoc(sd.ref);
+          }
+          const vidSnap=await getDocs(collection(db,"modules",mod.id,"videos"));
+          const queSnap=await getDocs(collection(db,"modules",mod.id,"questions"));
+          await Promise.all([...vidSnap.docs,...queSnap.docs].map(d=>deleteDoc(d.ref)));
+          await deleteDoc(doc(db,"modules",mod.id));
+        } catch(e){ showToast("Error deleting from database.","error"); return; }
+      }
+      modulesData.splice(mi,1);
+      modulesData.forEach((m,i)=>m.order=i+1);
+      if (activeModuleIdx===mi) { activeModuleIdx=null; activeView=null; document.getElementById("editor-panel").innerHTML=`<div class="empty-editor"><div style="font-size:2rem;">✦</div><p>Select a module from the sidebar.</p></div>`; }
+      else if (activeModuleIdx>mi) activeModuleIdx--;
+      renderSidebar();
+      showToast("Module deleted.","success");
+    };
+
+    // ── Add / delete submodule ────────────────────────────────────────────────
+    window.addSubmodule = function(mi) {
+      const mod = modulesData[mi];
+      const count = (mod.submodules||[]).length + 1;
+      const order = `${mi+1}.${count}`;
+      if (!mod.submodules) mod.submodules = [];
+      mod.submodules.push({
+        id:`sub_${Date.now()}`, title:"New Sub-module", description:"", content:"",
+        bannerImage:"", order, contentBlocks:[], videos:[], images:[], _new:true
+      });
+      mod._open = true;
+      activeModuleIdx = mi;
+      activeSubmoduleIdx = mod.submodules.length-1;
+      activeView = "submodule";
+      renderSidebar();
+      renderSubmoduleEditor(mi, activeSubmoduleIdx);
+      showToast("Sub-module added — fill in details and save.","info");
+    };
+
+    window.deleteSubmodule = async function(mi, si) {
+      const sub = modulesData[mi].submodules[si];
+      if (!confirm(`Delete "${sub.title||"this sub-module"}"?`)) return;
+      if (!sub._new) {
+        try {
+          const mod = modulesData[mi];
+          const svSnap=await getDocs(collection(db,"modules",mod.id,"submodules",sub.id,"videos"));
+          const siSnap=await getDocs(collection(db,"modules",mod.id,"submodules",sub.id,"images"));
+          await Promise.all([...svSnap.docs,...siSnap.docs].map(d=>deleteDoc(d.ref)));
+          await deleteDoc(doc(db,"modules",mod.id,"submodules",sub.id));
+        } catch(e){ showToast("Error deleting.","error"); return; }
+      }
+      modulesData[mi].submodules.splice(si,1);
+      if (activeView==="submodule" && activeModuleIdx===mi && activeSubmoduleIdx===si) {
+        activeSubmoduleIdx=null; activeView="module";
+        renderModuleEditor(mi);
+      }
+      renderSidebar();
+      showToast("Sub-module deleted.","success");
+    };
+
+    // ── Module editor ─────────────────────────────────────────────────────────
+    function renderModuleEditor(mi) {
+      const mod = modulesData[mi];
+      const panel = document.getElementById("editor-panel");
+      panel.innerHTML = `
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap;">
+          <div>
+            <div class="editor-subhead">Module ${mi+1}</div>
+            <div class="editor-heading gold-text" id="editor-mod-title-display">${mod.title||"Untitled"}</div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm" onclick="loadAllModules()">Discard</button>
+            <button class="btn btn-primary" id="save-mod-btn" onclick="saveModule(${mi})">Save Module</button>
+          </div>
+        </div>
+
+        <div class="editor-section">
+          <div class="editor-section-header"><span class="editor-section-title">Module Info</span></div>
+          <div class="editor-section-body" style="display:flex;flex-direction:column;gap:10px;">
+            <div><label>Title</label><input class="input-std" id="mod-title" value="${esc(mod.title||"")}" placeholder="e.g. Brand & Ethics" oninput="updateModTitle(${mi},this.value)"/></div>
+            <div><label>Short description</label><input class="input-std" id="mod-desc" value="${esc(mod.description||"")}" placeholder="Shown on dashboard"/></div>
+            <div><label>Banner image URL</label><input class="input-std" id="mod-banner" value="${esc(mod.bannerImage||"")}" placeholder="https://..."/></div>
+            <div id="mod-banner-preview" style="${mod.bannerImage?"":"display:none;"}">${mod.bannerImage?`<div class="img-preview"><img src="${mod.bannerImage}"/></div>`:""}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div><label>Passing score</label><input class="input-std" type="number" id="mod-passing" value="${mod.passingScore||4}" min="1" max="20"/></div>
+              <div><label>Total questions</label><input class="input-std" type="number" id="mod-total" value="${mod.totalQuestions||5}" min="1" max="20"/></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="editor-section">
+          <div class="editor-section-header"><span class="editor-section-title">Intro Content</span><span style="font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic;">Use ![caption](url) to embed images</span></div>
+          <div class="editor-section-body">
+            <div id="mod-content-list"></div>
+            <button class="add-item-btn" id="add-mod-content-btn">+ Add Content Section</button>
+          </div>
+        </div>
+
+        <div class="editor-section">
+          <div class="editor-section-header"><span class="editor-section-title">Module-level Videos</span></div>
+          <div class="editor-section-body">
+            <div id="mod-videos-list"></div>
+            <button class="add-item-btn" id="add-mod-video-btn">+ Add Video</button>
+          </div>
+        </div>
+
+        <div class="editor-section">
+          <div class="editor-section-header"><span class="editor-section-title">Quiz Questions</span><span style="font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic;">Radio = correct answer</span></div>
+          <div class="editor-section-body">
+            <div id="mod-questions-list"></div>
+            <button class="add-item-btn" id="add-mod-question-btn">+ Add Question</button>
+          </div>
+        </div>`;
+
+      // Wire buttons
+      document.getElementById("mod-banner").addEventListener("input", function(){
+        const prev=document.getElementById("mod-banner-preview");
+        prev.style.display=this.value?"block":"none";
+        prev.innerHTML=this.value?`<div class="img-preview"><img src="${this.value}"/></div>`:"";
+      });
+      document.getElementById("add-mod-content-btn").onclick=()=>{ mod.contentBlocks.push({tempId:`b${Date.now()}`,text:""}); renderModContentBlocks(mi); };
+      document.getElementById("add-mod-video-btn").onclick=()=>{ mod.videos.push({tempId:`v${Date.now()}`,title:"",youtubeId:"",order:mod.videos.length+1}); renderModVideos(mi); };
+      document.getElementById("add-mod-question-btn").onclick=()=>{ mod.questions.push({tempId:`q${Date.now()}`,question:"",options:["","","",""],correctIndex:0,order:mod.questions.length+1}); renderModQuestions(mi); };
+
+      renderModContentBlocks(mi);
+      renderModVideos(mi);
+      renderModQuestions(mi);
+    }
+
+    window.updateModTitle = function(mi, val) {
+      modulesData[mi].title = val;
+      const display = document.getElementById("editor-mod-title-display");
+      if (display) display.textContent = val||"Untitled";
+      // Update sidebar live
+      const sideTitle = document.querySelector(`#cs-module-list .cs-mod:nth-child(${mi+1}) .cs-title`);
+      if (sideTitle) sideTitle.textContent = val||"Untitled";
+    };
+
+    function renderModContentBlocks(mi) {
+      const list=document.getElementById("mod-content-list"); if(!list)return;
+      list.innerHTML="";
+      const mod=modulesData[mi];
+      if(!mod.contentBlocks.length){list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No content yet.</p>`;return;}
+      mod.contentBlocks.forEach((block,bi)=>{
+        const div=document.createElement("div");div.className="item-card";div.draggable=true;div.dataset.idx=bi;div.dataset.type="mod-content";
+        const handle=document.createElement("div");handle.className="drag-handle";handle.textContent="⠿";
+        const fields=document.createElement("div");fields.className="item-fields";
+        const ta=makeEl("textarea","Write content or use ![caption](url) for images",block.text||"",e=>mod.contentBlocks[bi].text=e.target.value,"textarea-std");
+        fields.appendChild(ta);
+        const del=document.createElement("button");del.className="delete-btn";del.textContent="✕";del.onclick=()=>{if(confirm("Delete?"))mod.contentBlocks.splice(bi,1),renderModContentBlocks(mi);};
+        div.appendChild(handle);div.appendChild(fields);div.appendChild(del);
+        addItemDrag(div,"mod-content",mi,null,renderModContentBlocks);
+        list.appendChild(div);
+      });
+    }
+
+    function renderModVideos(mi) {
+      const list=document.getElementById("mod-videos-list"); if(!list)return;
+      list.innerHTML="";
+      const mod=modulesData[mi];
+      if(!mod.videos.length){list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No videos yet.</p>`;return;}
+      mod.videos.forEach((vid,vi)=>{
+        const div=document.createElement("div");div.className="item-card";div.draggable=true;div.dataset.idx=vi;div.dataset.type="mod-video";
+        const handle=document.createElement("div");handle.className="drag-handle";handle.textContent="⠿";
+        const fields=document.createElement("div");fields.className="item-fields";
+        const titleIn=makeEl("input","Video title",vid.title||"",e=>mod.videos[vi].title=e.target.value,"input-std");
+        const urlIn=makeEl("input","YouTube URL or video ID",vid.youtubeId||"",e=>{
+          let val=e.target.value.trim();const m2=val.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);if(m2)val=m2[1];
+          mod.videos[vi].youtubeId=val;
+          let prev=fields.querySelector(".youtube-preview");
+          if(val.length>=11){if(!prev){prev=document.createElement("div");prev.className="youtube-preview";fields.appendChild(prev);}prev.innerHTML=`<iframe src="https://www.youtube.com/embed/${val}?rel=0" allowfullscreen></iframe>`;}
+          else if(prev){prev.remove();}
+        },"input-std");
+        fields.appendChild(titleIn);fields.appendChild(urlIn);
+        if(vid.youtubeId){const prev=document.createElement("div");prev.className="youtube-preview";prev.innerHTML=`<iframe src="https://www.youtube.com/embed/${vid.youtubeId}?rel=0" allowfullscreen></iframe>`;fields.appendChild(prev);}
+        const del=document.createElement("button");del.className="delete-btn";del.textContent="✕";del.onclick=()=>{if(confirm("Delete?"))mod.videos.splice(vi,1),renderModVideos(mi);};
+        div.appendChild(handle);div.appendChild(fields);div.appendChild(del);
+        addItemDrag(div,"mod-video",mi,null,renderModVideos);
+        list.appendChild(div);
+      });
+    }
+
+    function renderModQuestions(mi) {
+      const list=document.getElementById("mod-questions-list"); if(!list)return;
+      list.innerHTML="";
+      const mod=modulesData[mi];
+      if(!mod.questions.length){list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No questions yet.</p>`;return;}
+      mod.questions.forEach((q,qi)=>{
+        const options=[...(q.options||["","","",""])];while(options.length<4)options.push("");
+        const div=document.createElement("div");div.className="item-card";div.draggable=true;div.dataset.idx=qi;div.dataset.type="mod-question";div.style.flexDirection="column";
+        const inner=document.createElement("div");inner.style.cssText="display:flex;gap:8px;align-items:flex-start;width:100%;";
+        const handle=document.createElement("div");handle.className="drag-handle";handle.textContent="⠿";
+        const fields=document.createElement("div");fields.className="item-fields";fields.style.flex="1";
+        const qIn=makeEl("input",`Question ${qi+1}`,q.question||"",e=>mod.questions[qi].question=e.target.value,"input-std");
+        fields.appendChild(qIn);
+        const optLabel=document.createElement("label");optLabel.textContent="Options — radio = correct";optLabel.style.marginTop="8px";fields.appendChild(optLabel);
+        options.forEach((opt,oi)=>{
+          const row=document.createElement("div");row.className="option-row";
+          const radio=document.createElement("input");radio.type="radio";radio.name=`mod_correct_${mi}_${qi}`;radio.className="correct-radio";radio.checked=(q.correctIndex||0)===oi;
+          radio.addEventListener("change",()=>mod.questions[qi].correctIndex=oi);
+          const letter=document.createElement("span");letter.textContent=String.fromCharCode(65+oi);letter.style.cssText="font-family:var(--cinzel);font-size:10px;color:var(--text3);width:18px;flex-shrink:0;";
+          const optIn=makeEl("input",`Option ${String.fromCharCode(65+oi)}`,opt,e=>mod.questions[qi].options[oi]=e.target.value,"input-std");
+          row.appendChild(radio);row.appendChild(letter);row.appendChild(optIn);fields.appendChild(row);
+        });
+        const del=document.createElement("button");del.className="delete-btn";del.textContent="✕";del.onclick=()=>{if(confirm("Delete?"))mod.questions.splice(qi,1),renderModQuestions(mi);};
+        inner.appendChild(handle);inner.appendChild(fields);inner.appendChild(del);div.appendChild(inner);
+        addItemDrag(div,"mod-question",mi,null,renderModQuestions);
+        list.appendChild(div);
+      });
+    }
+
+    // ── Submodule editor ──────────────────────────────────────────────────────
+    function renderSubmoduleEditor(mi, si) {
+      const mod=modulesData[mi], sub=mod.submodules[si];
+      const panel=document.getElementById("editor-panel");
+      panel.innerHTML=`
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap;">
+          <div>
+            <div class="editor-subhead">Module ${mi+1} › Sub-module</div>
+            <div class="editor-heading gold-text" id="editor-sub-title-display">${sub.title||"Untitled"}</div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm" onclick="loadAllModules()">Discard</button>
+            <button class="btn btn-primary" id="save-sub-btn" onclick="saveSubmodule(${mi},${si})">Save Sub-module</button>
+          </div>
+        </div>
+
+        <div class="editor-section">
+          <div class="editor-section-header"><span class="editor-section-title">Sub-module Info</span></div>
+          <div class="editor-section-body" style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:grid;grid-template-columns:100px 1fr;gap:10px;">
+              <div><label>Order (e.g. 1.1)</label><input class="input-std" id="sub-order" value="${esc(sub.order||"")}" placeholder="1.1"/></div>
+              <div><label>Title</label><input class="input-std" id="sub-title" value="${esc(sub.title||"")}" placeholder="Sub-module title" oninput="updateSubTitle(${mi},${si},this.value)"/></div>
+            </div>
+            <div><label>Short description</label><input class="input-std" id="sub-desc" value="${esc(sub.description||"")}" placeholder="Brief description"/></div>
+            <div><label>Banner image URL</label><input class="input-std" id="sub-banner" value="${esc(sub.bannerImage||"")}" placeholder="https://..."/></div>
+            <div id="sub-banner-preview" style="${sub.bannerImage?"":"display:none;"}">${sub.bannerImage?`<div class="img-preview"><img src="${sub.bannerImage}"/></div>`:""}</div>
+          </div>
+        </div>
+
+        <div class="editor-section">
+          <div class="editor-section-header"><span class="editor-section-title">Content</span><span style="font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic;">Use ![caption](url) to embed images inline</span></div>
+          <div class="editor-section-body">
+            <div id="sub-content-list"></div>
+            <button class="add-item-btn" id="add-sub-content-btn">+ Add Content Section</button>
+          </div>
+        </div>
+
+        <div class="editor-section">
+          <div class="editor-section-header"><span class="editor-section-title">Images</span></div>
+          <div class="editor-section-body">
+            <div id="sub-images-list"></div>
+            <button class="add-item-btn" id="add-sub-image-btn">+ Add Image</button>
+          </div>
+        </div>
+
+        <div class="editor-section">
+          <div class="editor-section-header"><span class="editor-section-title">Videos</span></div>
+          <div class="editor-section-body">
+            <div id="sub-videos-list"></div>
+            <button class="add-item-btn" id="add-sub-video-btn">+ Add Video</button>
+          </div>
+        </div>`;
+
+      document.getElementById("sub-banner").addEventListener("input",function(){
+        const prev=document.getElementById("sub-banner-preview");
+        prev.style.display=this.value?"block":"none";
+        prev.innerHTML=this.value?`<div class="img-preview"><img src="${this.value}"/></div>`:"";
+      });
+      document.getElementById("add-sub-content-btn").onclick=()=>{ if(!sub.contentBlocks)sub.contentBlocks=[]; sub.contentBlocks.push({tempId:`sc${Date.now()}`,text:""}); renderSubContentList(mi,si); };
+      document.getElementById("add-sub-image-btn").onclick=()=>{ if(!sub.images)sub.images=[]; sub.images.push({tempId:`si${Date.now()}`,url:"",caption:"",order:sub.images.length+1}); renderSubImagesList(mi,si); };
+      document.getElementById("add-sub-video-btn").onclick=()=>{ if(!sub.videos)sub.videos=[]; sub.videos.push({tempId:`sv${Date.now()}`,title:"",youtubeId:"",order:sub.videos.length+1}); renderSubVideosList(mi,si); };
+
+      renderSubContentList(mi,si);
+      renderSubImagesList(mi,si);
+      renderSubVideosList(mi,si);
+    }
+
+    window.updateSubTitle=function(mi,si,val){
+      modulesData[mi].submodules[si].title=val;
+      const display=document.getElementById("editor-sub-title-display");
+      if(display)display.textContent=val||"Untitled";
+      renderSidebar();
+    };
+
+    function renderSubContentList(mi,si){
+      const list=document.getElementById("sub-content-list");if(!list)return;
+      list.innerHTML="";
+      const sub=modulesData[mi].submodules[si];
+      const blocks=sub.contentBlocks||[];
+      if(!blocks.length){list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No content yet.</p>`;return;}
+      blocks.forEach((block,bi)=>{
+        const div=document.createElement("div");div.className="item-card";
+        const ta=makeEl("textarea","Write content...",block.text||"",e=>blocks[bi].text=e.target.value,"textarea-std");
+        const del=document.createElement("button");del.className="delete-btn";del.textContent="✕";del.onclick=()=>{if(confirm("Delete?"))blocks.splice(bi,1),renderSubContentList(mi,si);};
+        const fields=document.createElement("div");fields.className="item-fields";fields.appendChild(ta);
+        div.appendChild(fields);div.appendChild(del);list.appendChild(div);
+      });
+    }
+
+    function renderSubImagesList(mi,si){
+      const list=document.getElementById("sub-images-list");if(!list)return;
+      list.innerHTML="";
+      const sub=modulesData[mi].submodules[si];
+      const images=sub.images||[];
+      if(!images.length){list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No images yet.</p>`;return;}
+      images.forEach((img,ii)=>{
+        const div=document.createElement("div");div.className="item-card";
+        const fields=document.createElement("div");fields.className="item-fields";
+        const urlIn=makeEl("input","Image URL (https://...)",img.url||"",e=>{
+          images[ii].url=e.target.value;
+          let prev=fields.querySelector(".img-preview");
+          if(e.target.value){if(!prev){prev=document.createElement("div");prev.className="img-preview";fields.appendChild(prev);}prev.innerHTML=`<img src="${e.target.value}"/>`;}
+          else if(prev){prev.remove();}
+        },"input-std");
+        const capIn=makeEl("input","Caption (optional)",img.caption||"",e=>images[ii].caption=e.target.value,"input-std");
+        fields.appendChild(urlIn);fields.appendChild(capIn);
+        if(img.url){const prev=document.createElement("div");prev.className="img-preview";prev.innerHTML=`<img src="${img.url}"/>`;fields.appendChild(prev);}
+        const del=document.createElement("button");del.className="delete-btn";del.textContent="✕";del.onclick=()=>{if(confirm("Delete?"))images.splice(ii,1),renderSubImagesList(mi,si);};
+        div.appendChild(fields);div.appendChild(del);list.appendChild(div);
+      });
+    }
+
+    function renderSubVideosList(mi,si){
+      const list=document.getElementById("sub-videos-list");if(!list)return;
+      list.innerHTML="";
+      const sub=modulesData[mi].submodules[si];
+      const videos=sub.videos||[];
+      if(!videos.length){list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No videos yet.</p>`;return;}
+      videos.forEach((vid,vi)=>{
+        const div=document.createElement("div");div.className="item-card";
+        const fields=document.createElement("div");fields.className="item-fields";
+        const titleIn=makeEl("input","Video title",vid.title||"",e=>videos[vi].title=e.target.value,"input-std");
+        const urlIn=makeEl("input","YouTube URL or video ID",vid.youtubeId||"",e=>{
+          let val=e.target.value.trim();const m2=val.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);if(m2)val=m2[1];
+          videos[vi].youtubeId=val;
+          let prev=fields.querySelector(".youtube-preview");
+          if(val.length>=11){if(!prev){prev=document.createElement("div");prev.className="youtube-preview";fields.appendChild(prev);}prev.innerHTML=`<iframe src="https://www.youtube.com/embed/${val}?rel=0" allowfullscreen></iframe>`;}
+          else if(prev){prev.remove();}
+        },"input-std");
+        fields.appendChild(titleIn);fields.appendChild(urlIn);
+        if(vid.youtubeId){const prev=document.createElement("div");prev.className="youtube-preview";prev.innerHTML=`<iframe src="https://www.youtube.com/embed/${vid.youtubeId}?rel=0" allowfullscreen></iframe>`;fields.appendChild(prev);}
+        const del=document.createElement("button");del.className="delete-btn";del.textContent="✕";del.onclick=()=>{if(confirm("Delete?"))videos.splice(vi,1),renderSubVideosList(mi,si);};
+        div.appendChild(fields);div.appendChild(del);list.appendChild(div);
+      });
+    }
+
+    // ── Save module ───────────────────────────────────────────────────────────
+    window.saveModule = async function(mi) {
+      const btn=document.getElementById("save-mod-btn");
+      btn.textContent="Saving...";btn.disabled=true;
+      const mod=modulesData[mi];
+      try {
+        mod.title=document.getElementById("mod-title").value.trim();
+        mod.description=document.getElementById("mod-desc").value.trim();
+        mod.bannerImage=document.getElementById("mod-banner").value.trim();
+        mod.passingScore=parseInt(document.getElementById("mod-passing").value)||4;
+        mod.totalQuestions=parseInt(document.getElementById("mod-total").value)||5;
+        mod.order=mi+1;
+        const content=mod.contentBlocks.map(b=>b.text).join("\n\n");
+
+        // Save module order for all modules (in case of reorder)
+        await Promise.all(modulesData.map((m,i)=>setDoc(doc(db,"modules",m.id),{
+          id:m.id,order:i+1,title:m.title||"",description:m.description||"",
+          content:m.contentBlocks?m.contentBlocks.map(b=>b.text).join("\n\n"):"",
+          bannerImage:m.bannerImage||"",passingScore:m.passingScore||4,totalQuestions:m.totalQuestions||5
+        })));
+
+        // Save videos
+        const oldVids=await getDocs(collection(db,"modules",mod.id,"videos"));
+        await Promise.all(oldVids.docs.map(d=>deleteDoc(d.ref)));
+        await Promise.all(mod.videos.map((v,i)=>setDoc(doc(db,"modules",mod.id,"videos",v.id||`video_${i+1}`),{id:v.id||`video_${i+1}`,order:i+1,title:v.title||"",youtubeId:v.youtubeId||""})));
+
+        // Save questions
+        const oldQues=await getDocs(collection(db,"modules",mod.id,"questions"));
+        await Promise.all(oldQues.docs.map(d=>deleteDoc(d.ref)));
+        await Promise.all(mod.questions.map((q,i)=>setDoc(doc(db,"modules",mod.id,"questions",q.id||`q${i+1}`),{order:i+1,question:q.question||"",options:q.options||["","","",""],correctIndex:q.correctIndex||0})));
+
+        mod._new=false;
+        renderSidebar();
+        showToast("Module saved.","success");
+      } catch(e){ showToast("Save failed: "+e.message,"error"); console.error(e); }
+      finally{ btn.textContent="Save Module";btn.disabled=false; }
+    };
+
+    // ── Save submodule ────────────────────────────────────────────────────────
+    window.saveSubmodule = async function(mi, si) {
+      const btn=document.getElementById("save-sub-btn");
+      btn.textContent="Saving...";btn.disabled=true;
+      const mod=modulesData[mi], sub=mod.submodules[si];
+      try {
+        sub.order=document.getElementById("sub-order").value.trim();
+        sub.title=document.getElementById("sub-title").value.trim();
+        sub.description=document.getElementById("sub-desc").value.trim();
+        sub.bannerImage=document.getElementById("sub-banner").value.trim();
+        const content=(sub.contentBlocks||[]).map(b=>b.text).join("\n\n");
+
+        await setDoc(doc(db,"modules",mod.id,"submodules",sub.id),{
+          id:sub.id,order:sub.order||`${mi+1}.${si+1}`,title:sub.title||"",
+          description:sub.description||"",content,bannerImage:sub.bannerImage||""
+        });
+
+        const oldSV=await getDocs(collection(db,"modules",mod.id,"submodules",sub.id,"videos"));
+        await Promise.all(oldSV.docs.map(d=>deleteDoc(d.ref)));
+        await Promise.all((sub.videos||[]).map((v,i)=>setDoc(doc(db,"modules",mod.id,"submodules",sub.id,"videos",v.id||`sv_${i+1}`),{id:v.id||`sv_${i+1}`,order:i+1,title:v.title||"",youtubeId:v.youtubeId||""})));
+
+        const oldSI=await getDocs(collection(db,"modules",mod.id,"submodules",sub.id,"images"));
+        await Promise.all(oldSI.docs.map(d=>deleteDoc(d.ref)));
+        await Promise.all((sub.images||[]).map((img,i)=>setDoc(doc(db,"modules",mod.id,"submodules",sub.id,"images",img.id||`img_${i+1}`),{id:img.id||`img_${i+1}`,order:i+1,url:img.url||"",caption:img.caption||""})));
+
+        sub._new=false;
+        renderSidebar();
+        showToast("Sub-module saved.","success");
+      } catch(e){ showToast("Save failed: "+e.message,"error"); console.error(e); }
+      finally{ btn.textContent="Save Sub-module";btn.disabled=false; }
+    };
+
+    // ── Item drag (videos, questions, content blocks) ─────────────────────────
+    function addItemDrag(el, type, mi, si, rerender) {
+      el.addEventListener("dragstart",e=>{ dragSrc=el; dragType=type; el.classList.add("dragging"); e.dataTransfer.effectAllowed="move"; });
+      el.addEventListener("dragend",()=>{ el.classList.remove("dragging"); dragSrc=null; });
+      el.addEventListener("dragover",e=>e.preventDefault());
+      el.addEventListener("drop",e=>{
+        e.preventDefault();
+        if(!dragSrc||dragSrc===el||dragType!==type)return;
+        const from=parseInt(dragSrc.dataset.idx),to=parseInt(el.dataset.idx);
+        const mod=modulesData[mi];
+        let arr;
+        if(type==="mod-content")arr=mod.contentBlocks;
+        else if(type==="mod-video")arr=mod.videos;
+        else if(type==="mod-question")arr=mod.questions;
+        if(arr){const item=arr.splice(from,1)[0];arr.splice(to,0,item);rerender(mi);}
+      });
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function makeEl(tag, placeholder, value, onChange, className) {
+      const el=document.createElement(tag==="textarea"?"textarea":"input");
+      if(tag!=="textarea")el.type="text";
+      el.placeholder=placeholder; el.value=value; el.className=className||"input-std";
+      el.addEventListener("input",onChange);
+      return el;
+    }
+
+    function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+
+    // ── TRAINEES (unchanged) ──────────────────────────────────────────────────
     window.handleAddTrainee = async function() {
       const name=document.getElementById("new-name").value.trim();
       const email=document.getElementById("new-email").value.trim();
@@ -155,7 +824,7 @@
       const errEl=document.getElementById("add-trainee-error");
       const btn=document.getElementById("add-trainee-btn");
       errEl.style.display="none";
-      if(!name||!email||!password){errEl.textContent="Please fill in all three fields.";errEl.style.display="block";return;}
+      if(!name||!email||!password){errEl.textContent="Please fill in all fields.";errEl.style.display="block";return;}
       if(password.length<6){errEl.textContent="Password must be at least 6 characters.";errEl.style.display="block";return;}
       btn.textContent="Adding...";btn.disabled=true;
       try {
@@ -167,10 +836,10 @@
         allTrainees.push({id:result.uid,name,email,role:"trainee",certified:false});
         progressMap[result.uid]={};certMap[result.uid]={};
         renderStats();renderTrainees();
-      } catch(e) {
-        let msg="Failed.";
+      } catch(e){
+        let msg="Failed to add trainee.";
         if(e.code==="auth/email-already-in-use")msg="Email already registered.";
-        else if(e.code==="auth/invalid-email")msg="Invalid email address.";
+        else if(e.code==="auth/invalid-email")msg="Invalid email.";
         errEl.textContent=msg;errEl.style.display="block";
       } finally{btn.textContent="Add Trainee";btn.disabled=false;}
     };
@@ -188,7 +857,7 @@
 
     function countPassed(prog){return Object.values(prog||{}).filter(p=>p.status==="passed").length;}
 
-    function renderStats() {
+    function renderStats(){
       document.getElementById("stats-grid").innerHTML=[
         {label:"Total Trainees",value:allTrainees.length},
         {label:"Certified",value:allTrainees.filter(t=>t.certified).length},
@@ -198,14 +867,12 @@
       document.getElementById("trainee-count").textContent=`${allTrainees.length} total`;
     }
 
-    function renderTrainees() {
+    function renderTrainees(){
       const list=document.getElementById("trainee-list");
       list.innerHTML="";
       if(!allTrainees.length){list.innerHTML=`<div style="padding:3rem;text-align:center;font-family:var(--serif);font-style:italic;color:var(--text3);">No trainees yet.</div>`;return;}
       [...allTrainees].sort((a,b)=>countPassed(progressMap[b.id])-countPassed(progressMap[a.id])).forEach(trainee=>{
-        const passed=countPassed(progressMap[trainee.id]);
-        const pct=Math.round((passed/MODULES_COUNT)*100);
-        const cert=certMap[trainee.id]||{};
+        const passed=countPassed(progressMap[trainee.id]),pct=Math.round((passed/MODULES_COUNT)*100),cert=certMap[trainee.id]||{};
         const dots=SIGNOFF_STEPS.map(s=>`<div title="${s.label}" style="width:8px;height:8px;border-radius:50%;background:${cert[s.key]?"var(--success)":"var(--surface3)"};border:1px solid ${cert[s.key]?"var(--success)":"var(--border2)"};"></div>`).join("");
         const row=document.createElement("div");row.className="trainee-row";row.id=`row-${trainee.id}`;
         row.innerHTML=`
@@ -227,7 +894,7 @@
       });
     }
 
-    function buildDetail(trainee,cert) {
+    function buildDetail(trainee,cert){
       let qr="";
       for(let i=1;i<=MODULES_COUNT;i++){const mId=`module_${i}`,mp=progressMap[trainee.id]?.[mId];let txt="Not started",c="var(--text3)";if(mp?.status==="passed"){txt=`✓ ${mp.quizScore}/${mp.totalQuestions||5}`;c="var(--success)";}else if(mp?.status==="failed"){txt=`✗ ${mp.quizScore}/${mp.totalQuestions||5}`;c="var(--danger)";}else if(mp?.status==="in_progress"){txt="In progress";c="var(--gold)";}qr+=`<div class="quiz-line"><span style="color:var(--text2);">Module ${i}</span><span style="color:${c};">${txt}</span></div>`;}
       return `<div class="detail-grid"><div class="detail-card"><div class="detail-card-label">Quiz Progress</div>${qr}</div>${SIGNOFF_STEPS.map(step=>{const done=cert[step.key],dv=cert[step.dateKey];const ds=dv?new Date(dv.seconds*1000).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"";return `<div class="detail-card"><div class="detail-card-label">${step.label}</div>${done?`<div class="badge badge-pass" style="margin-bottom:10px;display:block;">✓${ds?" · "+ds:""}</div><button class="btn btn-ghost btn-sm" onclick="handleRevoke('${trainee.id}','${step.key}','${step.dateKey}')">Revoke</button>`:`<div class="badge badge-locked" style="margin-bottom:10px;display:block;">Pending</div><button class="btn btn-primary btn-sm" onclick="handleSignOff('${trainee.id}','${step.key}','${step.dateKey}')">Sign Off ✓</button>`}</div>`;}).join("")}</div>`;
@@ -236,452 +903,6 @@
     window.toggleTrainee=function(uid){const d=document.getElementById(`detail-${uid}`),c=document.getElementById(`chev-${uid}`),h=d.previousElementSibling,o=d.classList.contains("open");d.classList.toggle("open",!o);c.classList.toggle("open",!o);h.classList.toggle("expanded",!o);};
     window.handleSignOff=async function(uid,sk,dk){try{await adminSignOffFn({traineeUid:uid,stepKey:sk,dateKey:dk});const s=await getDoc(doc(db,"certifications",uid));certMap[uid]=s.exists()?s.data():{};const u=await getDoc(doc(db,"users",uid));if(u.data()?.certified){const t=allTrainees.find(t=>t.id===uid);if(t)t.certified=true;showToast(`${t?.name} is Certified!`,"success");}else{showToast("Sign-off recorded.","success");}document.getElementById(`detail-${uid}`).innerHTML=buildDetail(allTrainees.find(t=>t.id===uid),certMap[uid]||{});}catch(e){showToast("Sign-off failed.","error");}};
     window.handleRevoke=async function(uid,sk,dk){if(!confirm("Revoke?"))return;try{await revokeSignOffFn({traineeUid:uid,stepKey:sk,dateKey:dk});const s=await getDoc(doc(db,"certifications",uid));certMap[uid]=s.exists()?s.data():{};const t=allTrainees.find(t=>t.id===uid);if(t)t.certified=false;showToast("Revoked.","info");document.getElementById(`detail-${uid}`).innerHTML=buildDetail(t,certMap[uid]||{});}catch(e){showToast("Failed.","error");}};
-
-    // ── Content editor ────────────────────────────────────────────────────────
-    function buildModuleNav(){
-      document.getElementById("module-nav").innerHTML=MODULE_DEFS.map(m=>
-        `<button class="mod-tab ${m.id===currentModuleId?"active":""}" onclick="selectModule('${m.id}',this)">${m.label}</button>`
-      ).join("");
-    }
-
-    window.selectModule=function(moduleId,btn){
-      currentModuleId=moduleId;
-      document.querySelectorAll(".mod-tab").forEach(b=>b.classList.remove("active"));
-      btn.classList.add("active");
-      loadModuleContent(moduleId);
-    };
-
-    async function loadModuleContent(moduleId) {
-      const editor=document.getElementById("module-editor");
-      editor.innerHTML=`<div class="loading-wrap" style="min-height:200px;"><div class="spinner"></div></div>`;
-      try {
-        const [modSnap,vidSnap,queSnap,subSnap]=await Promise.all([
-          getDoc(doc(db,"modules",moduleId)),
-          getDocs(query(collection(db,"modules",moduleId,"videos"),orderBy("order"))).catch(()=>({docs:[]})),
-          getDocs(query(collection(db,"modules",moduleId,"questions"),orderBy("order"))).catch(()=>({docs:[]})),
-          getDocs(query(collection(db,"modules",moduleId,"submodules"),orderBy("order"))).catch(()=>({docs:[]})),
-        ]);
-        moduleData=modSnap.exists()?{id:modSnap.id,...modSnap.data()}:{id:moduleId,title:"",description:"",content:"",bannerImage:"",passingScore:4,totalQuestions:5};
-        videosData=vidSnap.docs.map(d=>({id:d.id,...d.data()}));
-        questionsData=queSnap.docs.map(d=>({id:d.id,...d.data()}));
-        contentBlocksData=(moduleData.content||"").split("\n\n").filter(b=>b.trim()).map((b,i)=>({tempId:`b${i}`,text:b.trim()}));
-
-        // Load submodule data
-        submodulesData=await Promise.all(subSnap.docs.map(async d=>{
-          const sub={id:d.id,...d.data()};
-          const [svSnap,siSnap]=await Promise.all([
-            getDocs(query(collection(db,"modules",moduleId,"submodules",d.id,"videos"),orderBy("order"))).catch(()=>({docs:[]})),
-            getDocs(query(collection(db,"modules",moduleId,"submodules",d.id,"images"),orderBy("order"))).catch(()=>({docs:[]})),
-          ]);
-          sub.videos=svSnap.docs.map(v=>({id:v.id,...v.data()}));
-          sub.images=siSnap.docs.map(i=>({id:i.id,...i.data()}));
-          sub.contentBlocks=(sub.content||"").split("\n\n").filter(b=>b.trim()).map((b,i)=>({tempId:`sb${i}`,text:b.trim()}));
-          return sub;
-        }));
-
-        renderEditor();
-      } catch(e){editor.innerHTML=`<div class="card" style="color:var(--danger);">Error: ${e.message}</div>`;}
-    }
-
-    function renderEditor() {
-      document.getElementById("module-editor").innerHTML=`
-        <div class="editor-section">
-          <div class="editor-section-header"><span class="editor-section-title">Module Info</span></div>
-          <div class="editor-section-body" style="display:flex;flex-direction:column;gap:10px;">
-            <div><label>Title</label><input class="input-std" type="text" id="mod-title" value="${esc(moduleData.title||"")}" placeholder="e.g. Module 1 — Brand & Ethics"/></div>
-            <div><label>Short description (dashboard)</label><input class="input-std" type="text" id="mod-desc" value="${esc(moduleData.description||"")}" placeholder="e.g. Identity, dress code, interaction ethics"/></div>
-            <div><label>Banner image URL (optional)</label><input class="input-std" type="text" id="mod-banner" value="${esc(moduleData.bannerImage||"")}" placeholder="https://... or leave blank"/></div>
-            <div id="banner-preview" style="${moduleData.bannerImage?"":"display:none;"}">
-              ${moduleData.bannerImage?`<img src="${moduleData.bannerImage}" style="max-height:150px;border-radius:var(--radius);border:1px solid var(--border);object-fit:cover;width:100%;"/>`:""}
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-              <div><label>Passing score</label><input class="input-std" type="number" id="mod-passing" value="${moduleData.passingScore||4}" min="1" max="20"/></div>
-              <div><label>Total questions</label><input class="input-std" type="number" id="mod-total" value="${moduleData.totalQuestions||5}" min="1" max="20"/></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="editor-section">
-          <div class="editor-section-header"><span class="editor-section-title">Module Intro Content</span><span style="font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic;">Shown on module overview page</span></div>
-          <div class="editor-section-body">
-            <p style="font-size:12px;color:var(--text3);font-family:var(--font);margin-bottom:8px;">Tip: To embed an image in content, use: <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-size:11px;">![caption](image-url)</code></p>
-            <div id="content-blocks-list"></div>
-            <button class="add-item-btn" id="add-content-btn">+ Add Content Section</button>
-          </div>
-        </div>
-
-        <div class="editor-section">
-          <div class="editor-section-header"><span class="editor-section-title">Sub-modules</span><span style="font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic;">e.g. 1.1, 1.2, 1.3</span></div>
-          <div class="editor-section-body">
-            <div id="submodules-list"></div>
-            <button class="add-item-btn" id="add-submod-btn">+ Add Sub-module</button>
-          </div>
-        </div>
-
-        <div class="editor-section">
-          <div class="editor-section-header"><span class="editor-section-title">Module-level Videos</span><span style="font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic;">If no sub-modules, videos show directly</span></div>
-          <div class="editor-section-body">
-            <div id="videos-list"></div>
-            <button class="add-item-btn" id="add-video-btn">+ Add Video</button>
-          </div>
-        </div>
-
-        <div class="editor-section">
-          <div class="editor-section-header"><span class="editor-section-title">Quiz Questions</span><span style="font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic;">Radio = correct answer</span></div>
-          <div class="editor-section-body">
-            <div id="questions-list"></div>
-            <button class="add-item-btn" id="add-question-btn">+ Add Question</button>
-          </div>
-        </div>
-
-        <div class="save-bar">
-          <span class="save-status" id="save-status"></span>
-          <button class="btn btn-ghost" onclick="loadModuleContent(currentModuleId)">Discard</button>
-          <button class="btn btn-primary btn-lg" id="save-all-btn">Save All Changes</button>
-        </div>`;
-
-      // Wire buttons
-      document.getElementById("add-content-btn").onclick = addContentBlock;
-      document.getElementById("add-submod-btn").onclick = addSubmodule;
-      document.getElementById("add-video-btn").onclick = addVideo;
-      document.getElementById("add-question-btn").onclick = addQuestion;
-      document.getElementById("save-all-btn").onclick = saveAll;
-      document.getElementById("mod-banner").addEventListener("input", function() {
-        const preview = document.getElementById("banner-preview");
-        if (this.value) {
-          preview.style.display="block";
-          preview.innerHTML=`<img src="${this.value}" style="max-height:150px;border-radius:var(--radius);border:1px solid var(--border);object-fit:cover;width:100%;"/>`;
-        } else { preview.style.display="none"; preview.innerHTML=""; }
-      });
-
-      renderContentBlocks();
-      renderSubmodules();
-      renderVideos();
-      renderQuestions();
-    }
-
-    // ── Content blocks ────────────────────────────────────────────────────────
-    function makeInput(type, placeholder, value, onChange, extraStyle="") {
-      const el = document.createElement(type==="textarea"?"textarea":"input");
-      if (type!=="textarea") el.type=type;
-      el.placeholder=placeholder; el.value=value;
-      el.className = type==="textarea"?"textarea-std":"input-std";
-      if (extraStyle) el.style.cssText=extraStyle;
-      el.addEventListener("input", onChange);
-      return el;
-    }
-
-    function renderContentBlocks() {
-      const list=document.getElementById("content-blocks-list");
-      if(!list)return;
-      list.innerHTML="";
-      if(!contentBlocksData.length){list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No content yet.</p>`;return;}
-      contentBlocksData.forEach((block,idx)=>{
-        const div=document.createElement("div");div.className="item-card";div.draggable=true;div.dataset.idx=idx;div.dataset.type="content";
-        const handle=document.createElement("div");handle.className="drag-handle";handle.textContent="⠿";
-        const fields=document.createElement("div");fields.className="item-fields";
-        const ta=makeInput("textarea","Write content or use ![caption](url) for images",block.text||"",e=>contentBlocksData[idx].text=e.target.value);
-        fields.appendChild(ta);
-        const del=document.createElement("button");del.className="delete-btn";del.textContent="✕";del.onclick=()=>{if(confirm("Delete?"))contentBlocksData.splice(idx,1),renderContentBlocks();};
-        div.appendChild(handle);div.appendChild(fields);div.appendChild(del);
-        addDrag(div,"content");list.appendChild(div);
-      });
-    }
-
-    function addContentBlock(){contentBlocksData.push({tempId:`b${Date.now()}`,text:""});renderContentBlocks();const tas=document.querySelectorAll("#content-blocks-list textarea");if(tas.length)tas[tas.length-1].focus();}
-
-    // ── Sub-modules ───────────────────────────────────────────────────────────
-    function renderSubmodules() {
-      const list=document.getElementById("submodules-list");
-      if(!list)return;
-      list.innerHTML="";
-      if(!submodulesData.length){list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No sub-modules yet.</p>`;return;}
-      submodulesData.forEach((sub,idx)=>{
-        const card=document.createElement("div");card.className="submod-card";
-        const isOpen = sub._open !== false;
-
-        card.innerHTML=`
-          <div class="submod-card-header" onclick="toggleSubmod(${idx})">
-            <span class="submod-card-title">${sub.order||idx+1}. ${sub.title||"Untitled sub-module"}</span>
-            <div style="display:flex;gap:8px;align-items:center;">
-              <button class="delete-btn" onclick="event.stopPropagation();deleteSubmod(${idx})">✕</button>
-              <span style="color:var(--text3);font-size:12px;" id="subchev-${idx}">${isOpen?"▲":"▼"}</span>
-            </div>
-          </div>
-          <div class="submod-body ${isOpen?"open":""}" id="subbody-${idx}"></div>`;
-
-        list.appendChild(card);
-        buildSubmodBody(idx, document.getElementById(`subbody-${idx}`));
-      });
-    }
-
-    window.toggleSubmod=function(idx){
-      const body=document.getElementById(`subbody-${idx}`);
-      const chev=document.getElementById(`subchev-${idx}`);
-      const isOpen=body.classList.contains("open");
-      body.classList.toggle("open",!isOpen);
-      chev.textContent=isOpen?"▼":"▲";
-      submodulesData[idx]._open=!isOpen;
-    };
-
-    function buildSubmodBody(idx, container) {
-      const sub = submodulesData[idx];
-      container.innerHTML="";
-      container.style.cssText="display:flex;flex-direction:column;gap:10px;";
-
-      // Order + title row
-      const row1=document.createElement("div");row1.style.cssText="display:grid;grid-template-columns:80px 1fr;gap:10px;";
-      const orderIn=makeInput("text","1.1",sub.order||"",e=>{ submodulesData[idx].order=e.target.value; document.getElementById(`subchev-${idx}`)?.previousElementSibling && refreshSubmodTitle(idx); });
-      const titleIn=makeInput("text","Sub-module title",sub.title||"",e=>{ submodulesData[idx].title=e.target.value; refreshSubmodTitle(idx); });
-      const orderWrap=document.createElement("div");orderWrap.innerHTML="<label>Order</label>";orderWrap.appendChild(orderIn);
-      const titleWrap=document.createElement("div");titleWrap.innerHTML="<label>Title</label>";titleWrap.appendChild(titleIn);
-      row1.appendChild(orderWrap);row1.appendChild(titleWrap);container.appendChild(row1);
-
-      // Description
-      const descWrap=document.createElement("div");descWrap.innerHTML="<label>Short description</label>";
-      const descIn=makeInput("text","Brief description",sub.description||"",e=>submodulesData[idx].description=e.target.value);
-      descWrap.appendChild(descIn);container.appendChild(descWrap);
-
-      // Banner image
-      const bannerWrap=document.createElement("div");bannerWrap.innerHTML="<label>Banner image URL</label>";
-      const bannerIn=makeInput("text","https://...",sub.bannerImage||"",e=>{
-        submodulesData[idx].bannerImage=e.target.value;
-        let prev=bannerWrap.querySelector(".img-preview");
-        if(e.target.value){if(!prev){prev=document.createElement("div");prev.className="img-preview";bannerWrap.appendChild(prev);}prev.innerHTML=`<img src="${e.target.value}"/>`;}
-        else if(prev){prev.remove();}
-      });
-      bannerWrap.appendChild(bannerIn);
-      if(sub.bannerImage){const prev=document.createElement("div");prev.className="img-preview";prev.innerHTML=`<img src="${sub.bannerImage}"/>`;bannerWrap.appendChild(prev);}
-      container.appendChild(bannerWrap);
-
-      // Content
-      const contentLabel=document.createElement("label");contentLabel.textContent="Content";container.appendChild(contentLabel);
-      const hint=document.createElement("p");hint.textContent='Use ![caption](url) to embed images inline';hint.style.cssText="font-size:11px;color:var(--text3);margin-bottom:4px;font-style:normal;font-family:var(--font);";container.appendChild(hint);
-      const contentBlocksEl=document.createElement("div");contentBlocksEl.id=`sub-content-${idx}`;container.appendChild(contentBlocksEl);
-      renderSubContentBlocks(idx,contentBlocksEl);
-      const addCBtn=document.createElement("button");addCBtn.className="add-item-btn";addCBtn.textContent="+ Add Content Section";addCBtn.onclick=()=>{if(!submodulesData[idx].contentBlocks)submodulesData[idx].contentBlocks=[];submodulesData[idx].contentBlocks.push({tempId:`sc${Date.now()}`,text:""});renderSubContentBlocks(idx,contentBlocksEl);};
-      container.appendChild(addCBtn);
-
-      // Images section
-      const imgLabel=document.createElement("label");imgLabel.textContent="Images";imgLabel.style.marginTop="6px";container.appendChild(imgLabel);
-      const imagesEl=document.createElement("div");imagesEl.id=`sub-images-${idx}`;container.appendChild(imagesEl);
-      renderSubImages(idx,imagesEl);
-      const addIBtn=document.createElement("button");addIBtn.className="add-item-btn";addIBtn.textContent="+ Add Image";addIBtn.onclick=()=>{if(!submodulesData[idx].images)submodulesData[idx].images=[];submodulesData[idx].images.push({tempId:`si${Date.now()}`,url:"",caption:"",order:(submodulesData[idx].images?.length||0)+1});renderSubImages(idx,imagesEl);};
-      container.appendChild(addIBtn);
-
-      // Videos section
-      const vidLabel=document.createElement("label");vidLabel.textContent="Videos";vidLabel.style.marginTop="6px";container.appendChild(vidLabel);
-      const videosEl=document.createElement("div");videosEl.id=`sub-videos-${idx}`;container.appendChild(videosEl);
-      renderSubVideos(idx,videosEl);
-      const addVBtn=document.createElement("button");addVBtn.className="add-item-btn";addVBtn.textContent="+ Add Video";addVBtn.onclick=()=>{if(!submodulesData[idx].videos)submodulesData[idx].videos=[];submodulesData[idx].videos.push({tempId:`sv${Date.now()}`,title:"",youtubeId:"",order:(submodulesData[idx].videos?.length||0)+1});renderSubVideos(idx,videosEl);};
-      container.appendChild(addVBtn);
-    }
-
-    function refreshSubmodTitle(idx) {
-      const card=document.querySelector(`.submod-card:nth-child(${idx+1}) .submod-card-title`);
-      if(card) card.textContent=`${submodulesData[idx].order||idx+1}. ${submodulesData[idx].title||"Untitled"}`;
-    }
-
-    function renderSubContentBlocks(subIdx, container) {
-      container.innerHTML="";
-      const blocks=submodulesData[subIdx].contentBlocks||[];
-      if(!blocks.length){container.innerHTML=`<p style="color:var(--text3);font-size:12px;margin-bottom:4px;">No content yet.</p>`;return;}
-      blocks.forEach((block,bi)=>{
-        const div=document.createElement("div");div.className="item-card";div.style.marginBottom="6px";
-        const ta=makeInput("textarea","Write content...",block.text||"",e=>submodulesData[subIdx].contentBlocks[bi].text=e.target.value,"min-height:60px;");
-        const del=document.createElement("button");del.className="delete-btn";del.textContent="✕";del.onclick=()=>{submodulesData[subIdx].contentBlocks.splice(bi,1);renderSubContentBlocks(subIdx,container);};
-        const fields=document.createElement("div");fields.className="item-fields";fields.appendChild(ta);
-        div.appendChild(fields);div.appendChild(del);
-        container.appendChild(div);
-      });
-    }
-
-    function renderSubImages(subIdx, container) {
-      container.innerHTML="";
-      const images=submodulesData[subIdx].images||[];
-      if(!images.length){container.innerHTML=`<p style="color:var(--text3);font-size:12px;margin-bottom:4px;">No images yet.</p>`;return;}
-      images.forEach((img,ii)=>{
-        const div=document.createElement("div");div.className="item-card";div.style.marginBottom="6px";
-        const fields=document.createElement("div");fields.className="item-fields";
-        const urlIn=makeInput("text","Image URL (https://...)",img.url||"",e=>{
-          submodulesData[subIdx].images[ii].url=e.target.value;
-          let prev=fields.querySelector(".img-preview");
-          if(e.target.value){if(!prev){prev=document.createElement("div");prev.className="img-preview";fields.appendChild(prev);}prev.innerHTML=`<img src="${e.target.value}"/>`;}
-          else if(prev){prev.remove();}
-        });
-        const capIn=makeInput("text","Caption (optional)",img.caption||"",e=>submodulesData[subIdx].images[ii].caption=e.target.value);
-        fields.appendChild(urlIn);fields.appendChild(capIn);
-        if(img.url){const prev=document.createElement("div");prev.className="img-preview";prev.innerHTML=`<img src="${img.url}"/>`;fields.appendChild(prev);}
-        const del=document.createElement("button");del.className="delete-btn";del.textContent="✕";del.onclick=()=>{submodulesData[subIdx].images.splice(ii,1);renderSubImages(subIdx,container);};
-        div.appendChild(fields);div.appendChild(del);
-        container.appendChild(div);
-      });
-    }
-
-    function renderSubVideos(subIdx, container) {
-      container.innerHTML="";
-      const videos=submodulesData[subIdx].videos||[];
-      if(!videos.length){container.innerHTML=`<p style="color:var(--text3);font-size:12px;margin-bottom:4px;">No videos yet.</p>`;return;}
-      videos.forEach((vid,vi)=>{
-        const div=document.createElement("div");div.className="item-card";div.style.marginBottom="6px";
-        const fields=document.createElement("div");fields.className="item-fields";
-        const titleIn=makeInput("text","Video title",vid.title||"",e=>submodulesData[subIdx].videos[vi].title=e.target.value);
-        const urlIn=makeInput("text","YouTube URL or video ID",vid.youtubeId||"",e=>{
-          let val=e.target.value.trim();
-          const match=val.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
-          if(match)val=match[1];
-          submodulesData[subIdx].videos[vi].youtubeId=val;
-          let prev=fields.querySelector(".youtube-preview");
-          if(val.length>=11){if(!prev){prev=document.createElement("div");prev.className="youtube-preview";fields.appendChild(prev);}prev.innerHTML=`<iframe src="https://www.youtube.com/embed/${val}?rel=0" allowfullscreen></iframe>`;}
-          else if(prev){prev.remove();}
-        });
-        fields.appendChild(titleIn);fields.appendChild(urlIn);
-        if(vid.youtubeId){const prev=document.createElement("div");prev.className="youtube-preview";prev.innerHTML=`<iframe src="https://www.youtube.com/embed/${vid.youtubeId}?rel=0" allowfullscreen></iframe>`;fields.appendChild(prev);}
-        const del=document.createElement("button");del.className="delete-btn";del.textContent="✕";del.onclick=()=>{submodulesData[subIdx].videos.splice(vi,1);renderSubVideos(subIdx,container);};
-        div.appendChild(fields);div.appendChild(del);
-        container.appendChild(div);
-      });
-    }
-
-    function addSubmodule(){
-      const newOrder=submodulesData.length>0?`1.${submodulesData.length+1}`:`1.1`;
-      submodulesData.push({tempId:`sub${Date.now()}`,title:"",description:"",order:newOrder,bannerImage:"",content:"",contentBlocks:[],videos:[],images:[],_open:true});
-      renderSubmodules();
-    }
-
-    window.deleteSubmod=function(idx){if(confirm("Delete this sub-module and all its content?"))submodulesData.splice(idx,1),renderSubmodules();};
-
-    // ── Module-level videos ───────────────────────────────────────────────────
-    function renderVideos() {
-      const list=document.getElementById("videos-list");
-      if(!list)return;
-      list.innerHTML="";
-      if(!videosData.length){list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No videos yet.</p>`;return;}
-      videosData.forEach((vid,idx)=>{
-        const div=document.createElement("div");div.className="item-card";div.draggable=true;div.dataset.idx=idx;div.dataset.type="video";
-        const handle=document.createElement("div");handle.className="drag-handle";handle.textContent="⠿";
-        const fields=document.createElement("div");fields.className="item-fields";
-        const titleIn=makeInput("text","Video title",vid.title||"",e=>videosData[idx].title=e.target.value);
-        const urlIn=makeInput("text","YouTube URL or video ID",vid.youtubeId||"",e=>{
-          let val=e.target.value.trim();const match=val.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);if(match)val=match[1];
-          videosData[idx].youtubeId=val;
-          let prev=fields.querySelector(".youtube-preview");
-          if(val.length>=11){if(!prev){prev=document.createElement("div");prev.className="youtube-preview";fields.appendChild(prev);}prev.innerHTML=`<iframe src="https://www.youtube.com/embed/${val}?rel=0" allowfullscreen></iframe>`;}
-          else if(prev){prev.remove();}
-        });
-        fields.appendChild(titleIn);fields.appendChild(urlIn);
-        if(vid.youtubeId){const prev=document.createElement("div");prev.className="youtube-preview";prev.innerHTML=`<iframe src="https://www.youtube.com/embed/${vid.youtubeId}?rel=0" allowfullscreen></iframe>`;fields.appendChild(prev);}
-        const del=document.createElement("button");del.className="delete-btn";del.textContent="✕";del.onclick=()=>{if(confirm("Delete?"))videosData.splice(idx,1),renderVideos();};
-        div.appendChild(handle);div.appendChild(fields);div.appendChild(del);
-        addDrag(div,"video");list.appendChild(div);
-      });
-    }
-
-    function addVideo(){videosData.push({tempId:`v${Date.now()}`,title:"",youtubeId:"",order:videosData.length+1});renderVideos();}
-
-    // ── Questions ─────────────────────────────────────────────────────────────
-    function renderQuestions() {
-      const list=document.getElementById("questions-list");
-      if(!list)return;
-      list.innerHTML="";
-      if(!questionsData.length){list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No questions yet.</p>`;return;}
-      questionsData.forEach((q,idx)=>{
-        const options=[...(q.options||["","","",""])];while(options.length<4)options.push("");
-        const div=document.createElement("div");div.className="item-card";div.draggable=true;div.dataset.idx=idx;div.dataset.type="question";div.style.flexDirection="column";
-        const inner=document.createElement("div");inner.style.cssText="display:flex;gap:8px;align-items:flex-start;width:100%;";
-        const handle=document.createElement("div");handle.className="drag-handle";handle.textContent="⠿";
-        const fields=document.createElement("div");fields.className="item-fields";fields.style.flex="1";
-        const qIn=makeInput("text",`Question ${idx+1}`,q.question||"",e=>questionsData[idx].question=e.target.value);
-        fields.appendChild(qIn);
-        const optLabel=document.createElement("label");optLabel.textContent="Options — radio = correct";optLabel.style.marginTop="8px";fields.appendChild(optLabel);
-        options.forEach((opt,oi)=>{
-          const row=document.createElement("div");row.className="option-row";
-          const radio=document.createElement("input");radio.type="radio";radio.name=`correct_${idx}`;radio.className="correct-radio";radio.checked=(q.correctIndex||0)===oi;
-          radio.addEventListener("change",()=>questionsData[idx].correctIndex=oi);
-          const letter=document.createElement("span");letter.textContent=String.fromCharCode(65+oi);letter.style.cssText="font-family:var(--cinzel);font-size:10px;color:var(--text3);width:18px;flex-shrink:0;";
-          const optIn=makeInput("text",`Option ${String.fromCharCode(65+oi)}`,opt,e=>questionsData[idx].options[oi]=e.target.value);
-          row.appendChild(radio);row.appendChild(letter);row.appendChild(optIn);fields.appendChild(row);
-        });
-        const del=document.createElement("button");del.className="delete-btn";del.textContent="✕";del.onclick=()=>{if(confirm("Delete?"))questionsData.splice(idx,1),renderQuestions();};
-        inner.appendChild(handle);inner.appendChild(fields);inner.appendChild(del);div.appendChild(inner);
-        addDrag(div,"question");list.appendChild(div);
-      });
-    }
-
-    function addQuestion(){questionsData.push({tempId:`q${Date.now()}`,question:"",options:["","","",""],correctIndex:0,order:questionsData.length+1});renderQuestions();}
-
-    // ── Drag ──────────────────────────────────────────────────────────────────
-    function addDrag(el,type){
-      el.addEventListener("dragstart",e=>{dragSrc=el;el.classList.add("dragging");e.dataTransfer.effectAllowed="move";});
-      el.addEventListener("dragend",()=>{el.classList.remove("dragging");dragSrc=null;});
-      el.addEventListener("dragover",e=>e.preventDefault());
-      el.addEventListener("drop",e=>{
-        e.preventDefault();if(!dragSrc||dragSrc===el)return;
-        const from=parseInt(dragSrc.dataset.idx),to=parseInt(el.dataset.idx);
-        if(type==="content"){const i=contentBlocksData.splice(from,1)[0];contentBlocksData.splice(to,0,i);renderContentBlocks();}
-        else if(type==="video"){const i=videosData.splice(from,1)[0];videosData.splice(to,0,i);renderVideos();}
-        else if(type==="question"){const i=questionsData.splice(from,1)[0];questionsData.splice(to,0,i);renderQuestions();}
-      });
-    }
-
-    // ── Save ──────────────────────────────────────────────────────────────────
-    async function saveAll() {
-      const btn=document.getElementById("save-all-btn");
-      const status=document.getElementById("save-status");
-      btn.textContent="Saving...";btn.disabled=true;
-      try {
-        const title=document.getElementById("mod-title").value.trim();
-        const description=document.getElementById("mod-desc").value.trim();
-        const bannerImage=document.getElementById("mod-banner").value.trim();
-        const passingScore=parseInt(document.getElementById("mod-passing").value)||4;
-        const totalQuestions=parseInt(document.getElementById("mod-total").value)||5;
-        const content=contentBlocksData.map(b=>b.text).join("\n\n");
-
-        // Save module doc
-        await setDoc(doc(db,"modules",currentModuleId),{id:currentModuleId,order:parseInt(currentModuleId.split("_")[1]),title,description,content,bannerImage,passingScore,totalQuestions});
-
-        // Save module-level videos
-        const oldVids=await getDocs(collection(db,"modules",currentModuleId,"videos"));
-        await Promise.all(oldVids.docs.map(d=>deleteDoc(d.ref)));
-        await Promise.all(videosData.map((v,i)=>setDoc(doc(db,"modules",currentModuleId,"videos",v.id||`video_${i+1}`),{id:v.id||`video_${i+1}`,order:i+1,title:v.title||"",youtubeId:v.youtubeId||""})));
-
-        // Save questions
-        const oldQues=await getDocs(collection(db,"modules",currentModuleId,"questions"));
-        await Promise.all(oldQues.docs.map(d=>deleteDoc(d.ref)));
-        await Promise.all(questionsData.map((q,i)=>setDoc(doc(db,"modules",currentModuleId,"questions",q.id||`q${i+1}`),{order:i+1,question:q.question||"",options:q.options||["","","",""],correctIndex:q.correctIndex||0})));
-
-        // Save submodules
-        const oldSubs=await getDocs(collection(db,"modules",currentModuleId,"submodules"));
-        await Promise.all(oldSubs.docs.map(d=>deleteDoc(d.ref)));
-
-        await Promise.all(submodulesData.map(async (sub,i)=>{
-          const subId=sub.id||`sub_${i+1}`;
-          const subContent=(sub.contentBlocks||[]).map(b=>b.text).join("\n\n");
-          await setDoc(doc(db,"modules",currentModuleId,"submodules",subId),{
-            id:subId,order:sub.order||`1.${i+1}`,title:sub.title||"",description:sub.description||"",content:subContent,bannerImage:sub.bannerImage||""
-          });
-
-          // Sub videos
-          const oldSV=await getDocs(collection(db,"modules",currentModuleId,"submodules",subId,"videos"));
-          await Promise.all(oldSV.docs.map(d=>deleteDoc(d.ref)));
-          await Promise.all((sub.videos||[]).map((v,vi)=>setDoc(doc(db,"modules",currentModuleId,"submodules",subId,"videos",v.id||`sv_${vi+1}`),{id:v.id||`sv_${vi+1}`,order:vi+1,title:v.title||"",youtubeId:v.youtubeId||""})));
-
-          // Sub images
-          const oldSI=await getDocs(collection(db,"modules",currentModuleId,"submodules",subId,"images"));
-          await Promise.all(oldSI.docs.map(d=>deleteDoc(d.ref)));
-          await Promise.all((sub.images||[]).map((img,ii)=>setDoc(doc(db,"modules",currentModuleId,"submodules",subId,"images",img.id||`img_${ii+1}`),{id:img.id||`img_${ii+1}`,order:ii+1,url:img.url||"",caption:img.caption||""})));
-        }));
-
-        status.textContent="✓ Saved";status.className="save-status saved";
-        showToast("Module saved.","success");
-        setTimeout(()=>{status.textContent="";},3000);
-      } catch(e){
-        console.error("Save error:",e);
-        showToast("Save failed: "+e.message,"error");
-      } finally{btn.textContent="Save All Changes";btn.disabled=false;}
-    }
-
-    function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
   </script>
 </body>
 </html>
