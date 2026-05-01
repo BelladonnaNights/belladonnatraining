@@ -55,6 +55,15 @@
     .delete-btn:hover{color:var(--danger);}
     .youtube-preview{margin-top:8px;border-radius:var(--radius);overflow:hidden;}
     .youtube-preview iframe{width:100%;aspect-ratio:16/9;border:none;display:block;}
+    .img-preview{margin-top:8px;border-radius:var(--radius);overflow:hidden;max-height:200px;}
+    .img-preview img{width:100%;object-fit:cover;display:block;}
+    .submod-card{background:var(--surface);border:1px solid var(--gold-border);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1rem;}
+    .submod-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;cursor:pointer;}
+    .submod-card-title{font-family:var(--cinzel);font-size:12px;letter-spacing:.08em;font-weight:600;color:var(--gold2);}
+    .submod-body{display:none;}
+    .submod-body.open{display:block;}
+    .input-std{background:var(--surface);border:1px solid var(--gold-border);border-radius:var(--radius);padding:10px;color:var(--text);font-family:var(--font);font-size:14px;width:100%;}
+    .textarea-std{background:var(--surface);border:1px solid var(--gold-border);border-radius:var(--radius);padding:10px;color:var(--text);font-family:var(--font);font-size:14px;width:100%;resize:vertical;min-height:80px;}
   </style>
 </head>
 <body>
@@ -85,10 +94,9 @@
           </div>
           <div id="add-trainee-error" style="display:none;margin-top:10px;" class="error-msg"></div>
         </div>
-        <div class="card fade-up" style="padding:0;overflow:hidden;animation-delay:.1s;">
+        <div class="card fade-up" style="padding:0;overflow:hidden;">
           <div style="padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
-            <h3>All Trainees</h3>
-            <span id="trainee-count" class="text-muted"></span>
+            <h3>All Trainees</h3><span id="trainee-count" class="text-muted"></span>
           </div>
           <div id="trainee-list"></div>
         </div>
@@ -100,7 +108,6 @@
       </div>
     </div>
   </main>
-
   <div class="toast-wrap" id="toast-wrap"></div>
 
   <script type="module">
@@ -116,87 +123,75 @@
       {key:"soloLaunchComplete",label:"Solo Launch",dateKey:"soloLaunchDate"},
     ];
     const MODULE_DEFS = [
-      {id:"module_1",label:"Module 1 — Brand & Ethics"},
-      {id:"module_2",label:"Module 2 — Hardware & Laptop"},
-      {id:"module_3",label:"Module 3 — Karaoke Mastery"},
-      {id:"module_4",label:"Module 4 — Bingo & Trivia"},
-      {id:"module_5",label:"Module 5 — Basic Sound"},
-      {id:"module_6",label:"Module 6 — Marketing & The Hustle"},
+      {id:"module_1",label:"Module 1"},{id:"module_2",label:"Module 2"},
+      {id:"module_3",label:"Module 3"},{id:"module_4",label:"Module 4"},
+      {id:"module_5",label:"Module 5"},{id:"module_6",label:"Module 6"},
     ];
 
     let allTrainees=[], certMap={}, progressMap={};
     let currentModuleId="module_1";
-    let moduleData={}, videosData=[], contentBlocksData=[], questionsData=[];
+    let moduleData={}, videosData=[], contentBlocksData=[], questionsData=[], submodulesData=[];
     let dragSrc=null;
-
-    // expose to window so inline handlers can reach them
-    window._getData = () => ({videosData, contentBlocksData, questionsData});
 
     window.switchTab = function(tab) {
       document.querySelectorAll(".tab").forEach((t,i)=>t.classList.toggle("active",["trainees","content"][i]===tab));
       document.querySelectorAll(".tab-panel").forEach(p=>p.classList.remove("active"));
       document.getElementById(`tab-${tab}`).classList.add("active");
-      if (tab==="content" && !document.getElementById("module-nav").innerHTML) {
-        buildModuleNav(); loadModuleContent("module_1");
-      }
+      if (tab==="content"&&!document.getElementById("module-nav").innerHTML){buildModuleNav();loadModuleContent("module_1");}
     };
 
     requireAdmin(async (user, profile) => {
       document.getElementById("nav-placeholder").innerHTML = renderNav(profile, true);
       await loadTrainees();
-      document.getElementById("loading").style.display = "none";
-      document.getElementById("main").style.display = "block";
+      document.getElementById("loading").style.display="none";
+      document.getElementById("main").style.display="block";
     });
 
     // ── Add trainee ───────────────────────────────────────────────────────────
     window.handleAddTrainee = async function() {
-      const name = document.getElementById("new-name").value.trim();
-      const email = document.getElementById("new-email").value.trim();
-      const password = document.getElementById("new-password").value.trim();
-      const errEl = document.getElementById("add-trainee-error");
-      const btn = document.getElementById("add-trainee-btn");
-      errEl.style.display = "none";
-      if (!name||!email||!password) { errEl.textContent="Please fill in all three fields."; errEl.style.display="block"; return; }
-      if (password.length<6) { errEl.textContent="Password must be at least 6 characters."; errEl.style.display="block"; return; }
-      btn.textContent="Adding..."; btn.disabled=true;
+      const name=document.getElementById("new-name").value.trim();
+      const email=document.getElementById("new-email").value.trim();
+      const password=document.getElementById("new-password").value.trim();
+      const errEl=document.getElementById("add-trainee-error");
+      const btn=document.getElementById("add-trainee-btn");
+      errEl.style.display="none";
+      if(!name||!email||!password){errEl.textContent="Please fill in all three fields.";errEl.style.display="block";return;}
+      if(password.length<6){errEl.textContent="Password must be at least 6 characters.";errEl.style.display="block";return;}
+      btn.textContent="Adding...";btn.disabled=true;
       try {
-        const result = await createTrainee(email, password, name);
-        showToast(`${name} added successfully!`, "success");
+        const result=await createTrainee(email,password,name);
+        showToast(`${name} added!`,"success");
         document.getElementById("new-name").value="";
         document.getElementById("new-email").value="";
         document.getElementById("new-password").value="";
         allTrainees.push({id:result.uid,name,email,role:"trainee",certified:false});
-        progressMap[result.uid]={};
-        certMap[result.uid]={};
-        renderStats(); renderTrainees();
+        progressMap[result.uid]={};certMap[result.uid]={};
+        renderStats();renderTrainees();
       } catch(e) {
-        let msg="Failed to add trainee.";
-        if (e.code==="auth/email-already-in-use") msg="That email is already registered.";
-        else if (e.code==="auth/invalid-email") msg="Please enter a valid email address.";
-        else if (e.code==="auth/unauthorized-domain") msg="This domain isn't authorized in Firebase Auth settings yet.";
-        errEl.textContent=msg; errEl.style.display="block";
-      } finally { btn.textContent="Add Trainee"; btn.disabled=false; }
+        let msg="Failed.";
+        if(e.code==="auth/email-already-in-use")msg="Email already registered.";
+        else if(e.code==="auth/invalid-email")msg="Invalid email address.";
+        errEl.textContent=msg;errEl.style.display="block";
+      } finally{btn.textContent="Add Trainee";btn.disabled=false;}
     };
 
-    // ── Trainees ──────────────────────────────────────────────────────────────
     async function loadTrainees() {
-      const [usersSnap, certsSnap] = await Promise.all([getDocs(collection(db,"users")), getDocs(collection(db,"certifications"))]);
-      allTrainees = usersSnap.docs.map(d=>({id:d.id,...d.data()})).filter(u=>u.role!=="admin");
-      certsSnap.forEach(d=>{ certMap[d.id]=d.data(); });
-      await Promise.all(allTrainees.map(async u => {
-        const snap = await getDocs(collection(db,"users",u.id,"progress"));
-        const p={}; snap.forEach(d=>{p[d.id]=d.data();}); progressMap[u.id]=p;
+      const [usersSnap,certsSnap]=await Promise.all([getDocs(collection(db,"users")),getDocs(collection(db,"certifications"))]);
+      allTrainees=usersSnap.docs.map(d=>({id:d.id,...d.data()})).filter(u=>u.role!=="admin");
+      certsSnap.forEach(d=>{certMap[d.id]=d.data();});
+      await Promise.all(allTrainees.map(async u=>{
+        const snap=await getDocs(collection(db,"users",u.id,"progress"));
+        const p={};snap.forEach(d=>{p[d.id]=d.data();});progressMap[u.id]=p;
       }));
-      renderStats(); renderTrainees();
+      renderStats();renderTrainees();
     }
 
     function countPassed(prog){return Object.values(prog||{}).filter(p=>p.status==="passed").length;}
 
     function renderStats() {
-      const certified=allTrainees.filter(t=>t.certified).length;
       document.getElementById("stats-grid").innerHTML=[
         {label:"Total Trainees",value:allTrainees.length},
-        {label:"Certified",value:certified},
+        {label:"Certified",value:allTrainees.filter(t=>t.certified).length},
         {label:"In Progress",value:allTrainees.filter(t=>!t.certified&&countPassed(progressMap[t.id])>0).length},
         {label:"Not Started",value:allTrainees.filter(t=>countPassed(progressMap[t.id])===0&&!t.certified).length},
       ].map(s=>`<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-num">${s.value}</div></div>`).join("");
@@ -206,28 +201,22 @@
     function renderTrainees() {
       const list=document.getElementById("trainee-list");
       list.innerHTML="";
-      if (!allTrainees.length) {
-        list.innerHTML=`<div style="padding:3rem;text-align:center;font-family:var(--serif);font-style:italic;color:var(--text3);">No trainees yet — add one above.</div>`;
-        return;
-      }
+      if(!allTrainees.length){list.innerHTML=`<div style="padding:3rem;text-align:center;font-family:var(--serif);font-style:italic;color:var(--text3);">No trainees yet.</div>`;return;}
       [...allTrainees].sort((a,b)=>countPassed(progressMap[b.id])-countPassed(progressMap[a.id])).forEach(trainee=>{
         const passed=countPassed(progressMap[trainee.id]);
         const pct=Math.round((passed/MODULES_COUNT)*100);
         const cert=certMap[trainee.id]||{};
         const dots=SIGNOFF_STEPS.map(s=>`<div title="${s.label}" style="width:8px;height:8px;border-radius:50%;background:${cert[s.key]?"var(--success)":"var(--surface3)"};border:1px solid ${cert[s.key]?"var(--success)":"var(--border2)"};"></div>`).join("");
-        const row=document.createElement("div");
-        row.className="trainee-row"; row.id=`row-${trainee.id}`;
+        const row=document.createElement("div");row.className="trainee-row";row.id=`row-${trainee.id}`;
         row.innerHTML=`
           <div class="trainee-header" onclick="toggleTrainee('${trainee.id}')">
-            <div style="width:36px;height:36px;border-radius:50%;border:1px solid ${trainee.certified?"var(--success-border)":"var(--border2)"};background:${trainee.certified?"var(--success-bg)":"var(--surface2)"};display:flex;align-items:center;justify-content:center;font-family:var(--cinzel);font-size:12px;color:${trainee.certified?"var(--success)":"var(--text3)"};flex-shrink:0;">
-              ${trainee.certified?"✓":trainee.name?.charAt(0)||"?"}
-            </div>
+            <div style="width:36px;height:36px;border-radius:50%;border:1px solid ${trainee.certified?"var(--success-border)":"var(--border2)"};background:${trainee.certified?"var(--success-bg)":"var(--surface2)"};display:flex;align-items:center;justify-content:center;font-family:var(--cinzel);font-size:12px;color:${trainee.certified?"var(--success)":"var(--text3)"};flex-shrink:0;">${trainee.certified?"✓":trainee.name?.charAt(0)||"?"}</div>
             <div style="flex:1;min-width:0;">
               <div style="font-family:var(--cinzel);font-size:13px;font-weight:600;letter-spacing:.04em;">${trainee.name}${trainee.certified?`<span class="badge badge-pass" style="margin-left:8px;font-size:9px;">Certified</span>`:""}</div>
-              <div style="font-size:12px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--font);">${trainee.email}</div>
+              <div style="font-size:12px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${trainee.email}</div>
             </div>
             <div style="width:120px;flex-shrink:0;">
-              <div style="font-family:var(--cinzel);font-size:10px;color:var(--text3);text-align:right;margin-bottom:4px;letter-spacing:.06em;">${passed}/${MODULES_COUNT}</div>
+              <div style="font-family:var(--cinzel);font-size:10px;color:var(--text3);text-align:right;margin-bottom:4px;">${passed}/${MODULES_COUNT}</div>
               <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
             </div>
             <div style="display:flex;gap:3px;flex-shrink:0;padding:0 12px;">${dots}</div>
@@ -239,72 +228,23 @@
     }
 
     function buildDetail(trainee,cert) {
-      let quizRows="";
-      for(let i=1;i<=MODULES_COUNT;i++){
-        const mId=`module_${i}`,mp=progressMap[trainee.id]?.[mId];
-        let txt="Not started",color="var(--text3)";
-        if(mp?.status==="passed"){txt=`✓ ${mp.quizScore}/${mp.totalQuestions||5}`;color="var(--success)";}
-        else if(mp?.status==="failed"){txt=`✗ ${mp.quizScore}/${mp.totalQuestions||5}`;color="var(--danger)";}
-        else if(mp?.status==="in_progress"){txt="In progress";color="var(--gold)";}
-        quizRows+=`<div class="quiz-line"><span style="color:var(--text2);">Module ${i}</span><span style="color:${color};">${txt}</span></div>`;
-      }
-      return `<div class="detail-grid">
-        <div class="detail-card"><div class="detail-card-label">Quiz Progress</div>${quizRows}</div>
-        ${SIGNOFF_STEPS.map(step=>{
-          const done=cert[step.key],dateVal=cert[step.dateKey];
-          const dateStr=dateVal?new Date(dateVal.seconds*1000).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"";
-          return `<div class="detail-card"><div class="detail-card-label">${step.label}</div>
-            ${done
-              ?`<div class="badge badge-pass" style="margin-bottom:10px;display:block;">✓${dateStr?" · "+dateStr:""}</div><button class="btn btn-ghost btn-sm" onclick="handleRevoke('${trainee.id}','${step.key}','${step.dateKey}')">Revoke</button>`
-              :`<div class="badge badge-locked" style="margin-bottom:10px;display:block;">Pending</div><button class="btn btn-primary btn-sm" onclick="handleSignOff('${trainee.id}','${step.key}','${step.dateKey}')">Sign Off ✓</button>`
-            }</div>`;
-        }).join("")}
-      </div>`;
+      let qr="";
+      for(let i=1;i<=MODULES_COUNT;i++){const mId=`module_${i}`,mp=progressMap[trainee.id]?.[mId];let txt="Not started",c="var(--text3)";if(mp?.status==="passed"){txt=`✓ ${mp.quizScore}/${mp.totalQuestions||5}`;c="var(--success)";}else if(mp?.status==="failed"){txt=`✗ ${mp.quizScore}/${mp.totalQuestions||5}`;c="var(--danger)";}else if(mp?.status==="in_progress"){txt="In progress";c="var(--gold)";}qr+=`<div class="quiz-line"><span style="color:var(--text2);">Module ${i}</span><span style="color:${c};">${txt}</span></div>`;}
+      return `<div class="detail-grid"><div class="detail-card"><div class="detail-card-label">Quiz Progress</div>${qr}</div>${SIGNOFF_STEPS.map(step=>{const done=cert[step.key],dv=cert[step.dateKey];const ds=dv?new Date(dv.seconds*1000).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"";return `<div class="detail-card"><div class="detail-card-label">${step.label}</div>${done?`<div class="badge badge-pass" style="margin-bottom:10px;display:block;">✓${ds?" · "+ds:""}</div><button class="btn btn-ghost btn-sm" onclick="handleRevoke('${trainee.id}','${step.key}','${step.dateKey}')">Revoke</button>`:`<div class="badge badge-locked" style="margin-bottom:10px;display:block;">Pending</div><button class="btn btn-primary btn-sm" onclick="handleSignOff('${trainee.id}','${step.key}','${step.dateKey}')">Sign Off ✓</button>`}</div>`;}).join("")}</div>`;
     }
 
-    window.toggleTrainee = function(uid) {
-      const detail=document.getElementById(`detail-${uid}`);
-      const chev=document.getElementById(`chev-${uid}`);
-      const header=detail.previousElementSibling;
-      const isOpen=detail.classList.contains("open");
-      detail.classList.toggle("open",!isOpen);
-      chev.classList.toggle("open",!isOpen);
-      header.classList.toggle("expanded",!isOpen);
-    };
-
-    window.handleSignOff = async function(uid,stepKey,dateKey) {
-      try {
-        await adminSignOffFn({traineeUid:uid,stepKey,dateKey});
-        const snap=await getDoc(doc(db,"certifications",uid));
-        certMap[uid]=snap.exists()?snap.data():{};
-        const uSnap=await getDoc(doc(db,"users",uid));
-        if(uSnap.data()?.certified){const t=allTrainees.find(t=>t.id===uid);if(t)t.certified=true;showToast(`${t?.name} is now Belladonna Certified!`,"success");}
-        else{showToast("Sign-off recorded.","success");}
-        document.getElementById(`detail-${uid}`).innerHTML=buildDetail(allTrainees.find(t=>t.id===uid),certMap[uid]||{});
-      } catch(e){showToast("Sign-off failed. Cloud Functions may not be deployed yet.","error");}
-    };
-
-    window.handleRevoke = async function(uid,stepKey,dateKey) {
-      if(!confirm("Revoke this sign-off?"))return;
-      try {
-        await revokeSignOffFn({traineeUid:uid,stepKey,dateKey});
-        const snap=await getDoc(doc(db,"certifications",uid));
-        certMap[uid]=snap.exists()?snap.data():{};
-        const t=allTrainees.find(t=>t.id===uid);
-        if(t)t.certified=false;
-        showToast("Sign-off revoked.","info");
-        document.getElementById(`detail-${uid}`).innerHTML=buildDetail(t,certMap[uid]||{});
-      } catch(e){showToast("Failed to revoke.","error");}
-    };
+    window.toggleTrainee=function(uid){const d=document.getElementById(`detail-${uid}`),c=document.getElementById(`chev-${uid}`),h=d.previousElementSibling,o=d.classList.contains("open");d.classList.toggle("open",!o);c.classList.toggle("open",!o);h.classList.toggle("expanded",!o);};
+    window.handleSignOff=async function(uid,sk,dk){try{await adminSignOffFn({traineeUid:uid,stepKey:sk,dateKey:dk});const s=await getDoc(doc(db,"certifications",uid));certMap[uid]=s.exists()?s.data():{};const u=await getDoc(doc(db,"users",uid));if(u.data()?.certified){const t=allTrainees.find(t=>t.id===uid);if(t)t.certified=true;showToast(`${t?.name} is Certified!`,"success");}else{showToast("Sign-off recorded.","success");}document.getElementById(`detail-${uid}`).innerHTML=buildDetail(allTrainees.find(t=>t.id===uid),certMap[uid]||{});}catch(e){showToast("Sign-off failed.","error");}};
+    window.handleRevoke=async function(uid,sk,dk){if(!confirm("Revoke?"))return;try{await revokeSignOffFn({traineeUid:uid,stepKey:sk,dateKey:dk});const s=await getDoc(doc(db,"certifications",uid));certMap[uid]=s.exists()?s.data():{};const t=allTrainees.find(t=>t.id===uid);if(t)t.certified=false;showToast("Revoked.","info");document.getElementById(`detail-${uid}`).innerHTML=buildDetail(t,certMap[uid]||{});}catch(e){showToast("Failed.","error");}};
 
     // ── Content editor ────────────────────────────────────────────────────────
-    function buildModuleNav() {
+    function buildModuleNav(){
       document.getElementById("module-nav").innerHTML=MODULE_DEFS.map(m=>
         `<button class="mod-tab ${m.id===currentModuleId?"active":""}" onclick="selectModule('${m.id}',this)">${m.label}</button>`
       ).join("");
     }
 
-    window.selectModule = function(moduleId,btn) {
+    window.selectModule=function(moduleId,btn){
       currentModuleId=moduleId;
       document.querySelectorAll(".mod-tab").forEach(b=>b.classList.remove("active"));
       btn.classList.add("active");
@@ -315,19 +255,32 @@
       const editor=document.getElementById("module-editor");
       editor.innerHTML=`<div class="loading-wrap" style="min-height:200px;"><div class="spinner"></div></div>`;
       try {
-        const [modSnap,vidSnap,queSnap]=await Promise.all([
+        const [modSnap,vidSnap,queSnap,subSnap]=await Promise.all([
           getDoc(doc(db,"modules",moduleId)),
           getDocs(query(collection(db,"modules",moduleId,"videos"),orderBy("order"))).catch(()=>({docs:[]})),
           getDocs(query(collection(db,"modules",moduleId,"questions"),orderBy("order"))).catch(()=>({docs:[]})),
+          getDocs(query(collection(db,"modules",moduleId,"submodules"),orderBy("order"))).catch(()=>({docs:[]})),
         ]);
-        moduleData=modSnap.exists()?{id:modSnap.id,...modSnap.data()}:{id:moduleId,title:"",description:"",content:"",passingScore:4,totalQuestions:5};
+        moduleData=modSnap.exists()?{id:modSnap.id,...modSnap.data()}:{id:moduleId,title:"",description:"",content:"",bannerImage:"",passingScore:4,totalQuestions:5};
         videosData=vidSnap.docs.map(d=>({id:d.id,...d.data()}));
         questionsData=queSnap.docs.map(d=>({id:d.id,...d.data()}));
         contentBlocksData=(moduleData.content||"").split("\n\n").filter(b=>b.trim()).map((b,i)=>({tempId:`b${i}`,text:b.trim()}));
+
+        // Load submodule data
+        submodulesData=await Promise.all(subSnap.docs.map(async d=>{
+          const sub={id:d.id,...d.data()};
+          const [svSnap,siSnap]=await Promise.all([
+            getDocs(query(collection(db,"modules",moduleId,"submodules",d.id,"videos"),orderBy("order"))).catch(()=>({docs:[]})),
+            getDocs(query(collection(db,"modules",moduleId,"submodules",d.id,"images"),orderBy("order"))).catch(()=>({docs:[]})),
+          ]);
+          sub.videos=svSnap.docs.map(v=>({id:v.id,...v.data()}));
+          sub.images=siSnap.docs.map(i=>({id:i.id,...i.data()}));
+          sub.contentBlocks=(sub.content||"").split("\n\n").filter(b=>b.trim()).map((b,i)=>({tempId:`sb${i}`,text:b.trim()}));
+          return sub;
+        }));
+
         renderEditor();
-      } catch(e) {
-        editor.innerHTML=`<div class="card" style="color:var(--danger);">Error loading: ${e.message}</div>`;
-      }
+      } catch(e){editor.innerHTML=`<div class="card" style="color:var(--danger);">Error: ${e.message}</div>`;}
     }
 
     function renderEditor() {
@@ -335,190 +288,335 @@
         <div class="editor-section">
           <div class="editor-section-header"><span class="editor-section-title">Module Info</span></div>
           <div class="editor-section-body" style="display:flex;flex-direction:column;gap:10px;">
-            <div><label>Title</label><input type="text" id="mod-title" value="${esc(moduleData.title||"")}" placeholder="e.g. Module 1 — Brand & Ethics"/></div>
-            <div><label>Short description</label><input type="text" id="mod-desc" value="${esc(moduleData.description||"")}" placeholder="e.g. Identity, dress code, interaction ethics"/></div>
+            <div><label>Title</label><input class="input-std" type="text" id="mod-title" value="${esc(moduleData.title||"")}" placeholder="e.g. Module 1 — Brand & Ethics"/></div>
+            <div><label>Short description (dashboard)</label><input class="input-std" type="text" id="mod-desc" value="${esc(moduleData.description||"")}" placeholder="e.g. Identity, dress code, interaction ethics"/></div>
+            <div><label>Banner image URL (optional)</label><input class="input-std" type="text" id="mod-banner" value="${esc(moduleData.bannerImage||"")}" placeholder="https://... or leave blank"/></div>
+            <div id="banner-preview" style="${moduleData.bannerImage?"":"display:none;"}">
+              ${moduleData.bannerImage?`<img src="${moduleData.bannerImage}" style="max-height:150px;border-radius:var(--radius);border:1px solid var(--border);object-fit:cover;width:100%;"/>`:""}
+            </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-              <div><label>Passing score</label><input type="number" id="mod-passing" value="${moduleData.passingScore||4}" min="1" max="20"/></div>
-              <div><label>Total questions</label><input type="number" id="mod-total" value="${moduleData.totalQuestions||5}" min="1" max="20"/></div>
+              <div><label>Passing score</label><input class="input-std" type="number" id="mod-passing" value="${moduleData.passingScore||4}" min="1" max="20"/></div>
+              <div><label>Total questions</label><input class="input-std" type="number" id="mod-total" value="${moduleData.totalQuestions||5}" min="1" max="20"/></div>
             </div>
           </div>
         </div>
+
         <div class="editor-section">
-          <div class="editor-section-header"><span class="editor-section-title">Content Sections</span><span style="font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic;">Text shown above videos</span></div>
-          <div class="editor-section-body"><div id="content-blocks-list"></div><button class="add-item-btn" onclick="addContentBlock()">+ Add Content Section</button></div>
+          <div class="editor-section-header"><span class="editor-section-title">Module Intro Content</span><span style="font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic;">Shown on module overview page</span></div>
+          <div class="editor-section-body">
+            <p style="font-size:12px;color:var(--text3);font-family:var(--font);margin-bottom:8px;">Tip: To embed an image in content, use: <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-size:11px;">![caption](image-url)</code></p>
+            <div id="content-blocks-list"></div>
+            <button class="add-item-btn" id="add-content-btn">+ Add Content Section</button>
+          </div>
         </div>
+
         <div class="editor-section">
-          <div class="editor-section-header"><span class="editor-section-title">Videos</span><span style="font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic;">Drag to reorder</span></div>
-          <div class="editor-section-body"><div id="videos-list"></div><button class="add-item-btn" onclick="addVideo()">+ Add Video</button></div>
+          <div class="editor-section-header"><span class="editor-section-title">Sub-modules</span><span style="font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic;">e.g. 1.1, 1.2, 1.3</span></div>
+          <div class="editor-section-body">
+            <div id="submodules-list"></div>
+            <button class="add-item-btn" id="add-submod-btn">+ Add Sub-module</button>
+          </div>
         </div>
+
         <div class="editor-section">
-          <div class="editor-section-header"><span class="editor-section-title">Quiz Questions</span><span style="font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic;">Radio button = correct answer</span></div>
-          <div class="editor-section-body"><div id="questions-list"></div><button class="add-item-btn" onclick="addQuestion()">+ Add Question</button></div>
+          <div class="editor-section-header"><span class="editor-section-title">Module-level Videos</span><span style="font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic;">If no sub-modules, videos show directly</span></div>
+          <div class="editor-section-body">
+            <div id="videos-list"></div>
+            <button class="add-item-btn" id="add-video-btn">+ Add Video</button>
+          </div>
         </div>
+
+        <div class="editor-section">
+          <div class="editor-section-header"><span class="editor-section-title">Quiz Questions</span><span style="font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic;">Radio = correct answer</span></div>
+          <div class="editor-section-body">
+            <div id="questions-list"></div>
+            <button class="add-item-btn" id="add-question-btn">+ Add Question</button>
+          </div>
+        </div>
+
         <div class="save-bar">
           <span class="save-status" id="save-status"></span>
           <button class="btn btn-ghost" onclick="loadModuleContent(currentModuleId)">Discard</button>
-          <button class="btn btn-primary btn-lg" onclick="saveAll()">Save All Changes</button>
+          <button class="btn btn-primary btn-lg" id="save-all-btn">Save All Changes</button>
         </div>`;
+
+      // Wire buttons
+      document.getElementById("add-content-btn").onclick = addContentBlock;
+      document.getElementById("add-submod-btn").onclick = addSubmodule;
+      document.getElementById("add-video-btn").onclick = addVideo;
+      document.getElementById("add-question-btn").onclick = addQuestion;
+      document.getElementById("save-all-btn").onclick = saveAll;
+      document.getElementById("mod-banner").addEventListener("input", function() {
+        const preview = document.getElementById("banner-preview");
+        if (this.value) {
+          preview.style.display="block";
+          preview.innerHTML=`<img src="${this.value}" style="max-height:150px;border-radius:var(--radius);border:1px solid var(--border);object-fit:cover;width:100%;"/>`;
+        } else { preview.style.display="none"; preview.innerHTML=""; }
+      });
+
       renderContentBlocks();
+      renderSubmodules();
       renderVideos();
       renderQuestions();
     }
 
     // ── Content blocks ────────────────────────────────────────────────────────
+    function makeInput(type, placeholder, value, onChange, extraStyle="") {
+      const el = document.createElement(type==="textarea"?"textarea":"input");
+      if (type!=="textarea") el.type=type;
+      el.placeholder=placeholder; el.value=value;
+      el.className = type==="textarea"?"textarea-std":"input-std";
+      if (extraStyle) el.style.cssText=extraStyle;
+      el.addEventListener("input", onChange);
+      return el;
+    }
+
     function renderContentBlocks() {
       const list=document.getElementById("content-blocks-list");
       if(!list)return;
       list.innerHTML="";
-      if(!contentBlocksData.length){
-        list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No content yet. Add a section below.</p>`;
-        return;
-      }
+      if(!contentBlocksData.length){list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No content yet.</p>`;return;}
       contentBlocksData.forEach((block,idx)=>{
-        const div=document.createElement("div");
-        div.className="item-card"; div.draggable=true; div.dataset.idx=idx; div.dataset.type="content";
-        const ta=document.createElement("textarea");
-        ta.placeholder="Write your content here...";
-        ta.rows=4;
-        ta.style.cssText="background:var(--surface);border:1px solid var(--gold-border);border-radius:var(--radius);padding:10px;color:var(--text);font-family:var(--font);font-size:14px;width:100%;resize:vertical;";
-        ta.value=block.text||"";
-        ta.addEventListener("input",()=>{ contentBlocksData[idx].text=ta.value; });
-        const fields=document.createElement("div"); fields.className="item-fields"; fields.appendChild(ta);
-        const delBtn=document.createElement("button"); delBtn.className="delete-btn"; delBtn.textContent="✕"; delBtn.onclick=()=>deleteContentBlock(idx);
-        div.appendChild(document.createElement("div")); div.children[0].className="drag-handle"; div.children[0].textContent="⠿";
-        div.appendChild(fields);
-        div.appendChild(delBtn);
-        addDrag(div,"content");
-        list.appendChild(div);
+        const div=document.createElement("div");div.className="item-card";div.draggable=true;div.dataset.idx=idx;div.dataset.type="content";
+        const handle=document.createElement("div");handle.className="drag-handle";handle.textContent="⠿";
+        const fields=document.createElement("div");fields.className="item-fields";
+        const ta=makeInput("textarea","Write content or use ![caption](url) for images",block.text||"",e=>contentBlocksData[idx].text=e.target.value);
+        fields.appendChild(ta);
+        const del=document.createElement("button");del.className="delete-btn";del.textContent="✕";del.onclick=()=>{if(confirm("Delete?"))contentBlocksData.splice(idx,1),renderContentBlocks();};
+        div.appendChild(handle);div.appendChild(fields);div.appendChild(del);
+        addDrag(div,"content");list.appendChild(div);
       });
     }
 
-    window.addContentBlock=()=>{ contentBlocksData.push({tempId:`b${Date.now()}`,text:""}); renderContentBlocks(); const tas=document.querySelectorAll("#content-blocks-list textarea"); if(tas.length)tas[tas.length-1].focus(); };
-    window.deleteContentBlock=(idx)=>{ if(confirm("Delete this section?")){ contentBlocksData.splice(idx,1); renderContentBlocks(); } };
+    function addContentBlock(){contentBlocksData.push({tempId:`b${Date.now()}`,text:""});renderContentBlocks();const tas=document.querySelectorAll("#content-blocks-list textarea");if(tas.length)tas[tas.length-1].focus();}
 
-    // ── Videos ────────────────────────────────────────────────────────────────
+    // ── Sub-modules ───────────────────────────────────────────────────────────
+    function renderSubmodules() {
+      const list=document.getElementById("submodules-list");
+      if(!list)return;
+      list.innerHTML="";
+      if(!submodulesData.length){list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No sub-modules yet.</p>`;return;}
+      submodulesData.forEach((sub,idx)=>{
+        const card=document.createElement("div");card.className="submod-card";
+        const isOpen = sub._open !== false;
+
+        card.innerHTML=`
+          <div class="submod-card-header" onclick="toggleSubmod(${idx})">
+            <span class="submod-card-title">${sub.order||idx+1}. ${sub.title||"Untitled sub-module"}</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button class="delete-btn" onclick="event.stopPropagation();deleteSubmod(${idx})">✕</button>
+              <span style="color:var(--text3);font-size:12px;" id="subchev-${idx}">${isOpen?"▲":"▼"}</span>
+            </div>
+          </div>
+          <div class="submod-body ${isOpen?"open":""}" id="subbody-${idx}"></div>`;
+
+        list.appendChild(card);
+        buildSubmodBody(idx, document.getElementById(`subbody-${idx}`));
+      });
+    }
+
+    window.toggleSubmod=function(idx){
+      const body=document.getElementById(`subbody-${idx}`);
+      const chev=document.getElementById(`subchev-${idx}`);
+      const isOpen=body.classList.contains("open");
+      body.classList.toggle("open",!isOpen);
+      chev.textContent=isOpen?"▼":"▲";
+      submodulesData[idx]._open=!isOpen;
+    };
+
+    function buildSubmodBody(idx, container) {
+      const sub = submodulesData[idx];
+      container.innerHTML="";
+      container.style.cssText="display:flex;flex-direction:column;gap:10px;";
+
+      // Order + title row
+      const row1=document.createElement("div");row1.style.cssText="display:grid;grid-template-columns:80px 1fr;gap:10px;";
+      const orderIn=makeInput("text","1.1",sub.order||"",e=>{ submodulesData[idx].order=e.target.value; document.getElementById(`subchev-${idx}`)?.previousElementSibling && refreshSubmodTitle(idx); });
+      const titleIn=makeInput("text","Sub-module title",sub.title||"",e=>{ submodulesData[idx].title=e.target.value; refreshSubmodTitle(idx); });
+      const orderWrap=document.createElement("div");orderWrap.innerHTML="<label>Order</label>";orderWrap.appendChild(orderIn);
+      const titleWrap=document.createElement("div");titleWrap.innerHTML="<label>Title</label>";titleWrap.appendChild(titleIn);
+      row1.appendChild(orderWrap);row1.appendChild(titleWrap);container.appendChild(row1);
+
+      // Description
+      const descWrap=document.createElement("div");descWrap.innerHTML="<label>Short description</label>";
+      const descIn=makeInput("text","Brief description",sub.description||"",e=>submodulesData[idx].description=e.target.value);
+      descWrap.appendChild(descIn);container.appendChild(descWrap);
+
+      // Banner image
+      const bannerWrap=document.createElement("div");bannerWrap.innerHTML="<label>Banner image URL</label>";
+      const bannerIn=makeInput("text","https://...",sub.bannerImage||"",e=>{
+        submodulesData[idx].bannerImage=e.target.value;
+        let prev=bannerWrap.querySelector(".img-preview");
+        if(e.target.value){if(!prev){prev=document.createElement("div");prev.className="img-preview";bannerWrap.appendChild(prev);}prev.innerHTML=`<img src="${e.target.value}"/>`;}
+        else if(prev){prev.remove();}
+      });
+      bannerWrap.appendChild(bannerIn);
+      if(sub.bannerImage){const prev=document.createElement("div");prev.className="img-preview";prev.innerHTML=`<img src="${sub.bannerImage}"/>`;bannerWrap.appendChild(prev);}
+      container.appendChild(bannerWrap);
+
+      // Content
+      const contentLabel=document.createElement("label");contentLabel.textContent="Content";container.appendChild(contentLabel);
+      const hint=document.createElement("p");hint.textContent='Use ![caption](url) to embed images inline';hint.style.cssText="font-size:11px;color:var(--text3);margin-bottom:4px;font-style:normal;font-family:var(--font);";container.appendChild(hint);
+      const contentBlocksEl=document.createElement("div");contentBlocksEl.id=`sub-content-${idx}`;container.appendChild(contentBlocksEl);
+      renderSubContentBlocks(idx,contentBlocksEl);
+      const addCBtn=document.createElement("button");addCBtn.className="add-item-btn";addCBtn.textContent="+ Add Content Section";addCBtn.onclick=()=>{if(!submodulesData[idx].contentBlocks)submodulesData[idx].contentBlocks=[];submodulesData[idx].contentBlocks.push({tempId:`sc${Date.now()}`,text:""});renderSubContentBlocks(idx,contentBlocksEl);};
+      container.appendChild(addCBtn);
+
+      // Images section
+      const imgLabel=document.createElement("label");imgLabel.textContent="Images";imgLabel.style.marginTop="6px";container.appendChild(imgLabel);
+      const imagesEl=document.createElement("div");imagesEl.id=`sub-images-${idx}`;container.appendChild(imagesEl);
+      renderSubImages(idx,imagesEl);
+      const addIBtn=document.createElement("button");addIBtn.className="add-item-btn";addIBtn.textContent="+ Add Image";addIBtn.onclick=()=>{if(!submodulesData[idx].images)submodulesData[idx].images=[];submodulesData[idx].images.push({tempId:`si${Date.now()}`,url:"",caption:"",order:(submodulesData[idx].images?.length||0)+1});renderSubImages(idx,imagesEl);};
+      container.appendChild(addIBtn);
+
+      // Videos section
+      const vidLabel=document.createElement("label");vidLabel.textContent="Videos";vidLabel.style.marginTop="6px";container.appendChild(vidLabel);
+      const videosEl=document.createElement("div");videosEl.id=`sub-videos-${idx}`;container.appendChild(videosEl);
+      renderSubVideos(idx,videosEl);
+      const addVBtn=document.createElement("button");addVBtn.className="add-item-btn";addVBtn.textContent="+ Add Video";addVBtn.onclick=()=>{if(!submodulesData[idx].videos)submodulesData[idx].videos=[];submodulesData[idx].videos.push({tempId:`sv${Date.now()}`,title:"",youtubeId:"",order:(submodulesData[idx].videos?.length||0)+1});renderSubVideos(idx,videosEl);};
+      container.appendChild(addVBtn);
+    }
+
+    function refreshSubmodTitle(idx) {
+      const card=document.querySelector(`.submod-card:nth-child(${idx+1}) .submod-card-title`);
+      if(card) card.textContent=`${submodulesData[idx].order||idx+1}. ${submodulesData[idx].title||"Untitled"}`;
+    }
+
+    function renderSubContentBlocks(subIdx, container) {
+      container.innerHTML="";
+      const blocks=submodulesData[subIdx].contentBlocks||[];
+      if(!blocks.length){container.innerHTML=`<p style="color:var(--text3);font-size:12px;margin-bottom:4px;">No content yet.</p>`;return;}
+      blocks.forEach((block,bi)=>{
+        const div=document.createElement("div");div.className="item-card";div.style.marginBottom="6px";
+        const ta=makeInput("textarea","Write content...",block.text||"",e=>submodulesData[subIdx].contentBlocks[bi].text=e.target.value,"min-height:60px;");
+        const del=document.createElement("button");del.className="delete-btn";del.textContent="✕";del.onclick=()=>{submodulesData[subIdx].contentBlocks.splice(bi,1);renderSubContentBlocks(subIdx,container);};
+        const fields=document.createElement("div");fields.className="item-fields";fields.appendChild(ta);
+        div.appendChild(fields);div.appendChild(del);
+        container.appendChild(div);
+      });
+    }
+
+    function renderSubImages(subIdx, container) {
+      container.innerHTML="";
+      const images=submodulesData[subIdx].images||[];
+      if(!images.length){container.innerHTML=`<p style="color:var(--text3);font-size:12px;margin-bottom:4px;">No images yet.</p>`;return;}
+      images.forEach((img,ii)=>{
+        const div=document.createElement("div");div.className="item-card";div.style.marginBottom="6px";
+        const fields=document.createElement("div");fields.className="item-fields";
+        const urlIn=makeInput("text","Image URL (https://...)",img.url||"",e=>{
+          submodulesData[subIdx].images[ii].url=e.target.value;
+          let prev=fields.querySelector(".img-preview");
+          if(e.target.value){if(!prev){prev=document.createElement("div");prev.className="img-preview";fields.appendChild(prev);}prev.innerHTML=`<img src="${e.target.value}"/>`;}
+          else if(prev){prev.remove();}
+        });
+        const capIn=makeInput("text","Caption (optional)",img.caption||"",e=>submodulesData[subIdx].images[ii].caption=e.target.value);
+        fields.appendChild(urlIn);fields.appendChild(capIn);
+        if(img.url){const prev=document.createElement("div");prev.className="img-preview";prev.innerHTML=`<img src="${img.url}"/>`;fields.appendChild(prev);}
+        const del=document.createElement("button");del.className="delete-btn";del.textContent="✕";del.onclick=()=>{submodulesData[subIdx].images.splice(ii,1);renderSubImages(subIdx,container);};
+        div.appendChild(fields);div.appendChild(del);
+        container.appendChild(div);
+      });
+    }
+
+    function renderSubVideos(subIdx, container) {
+      container.innerHTML="";
+      const videos=submodulesData[subIdx].videos||[];
+      if(!videos.length){container.innerHTML=`<p style="color:var(--text3);font-size:12px;margin-bottom:4px;">No videos yet.</p>`;return;}
+      videos.forEach((vid,vi)=>{
+        const div=document.createElement("div");div.className="item-card";div.style.marginBottom="6px";
+        const fields=document.createElement("div");fields.className="item-fields";
+        const titleIn=makeInput("text","Video title",vid.title||"",e=>submodulesData[subIdx].videos[vi].title=e.target.value);
+        const urlIn=makeInput("text","YouTube URL or video ID",vid.youtubeId||"",e=>{
+          let val=e.target.value.trim();
+          const match=val.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
+          if(match)val=match[1];
+          submodulesData[subIdx].videos[vi].youtubeId=val;
+          let prev=fields.querySelector(".youtube-preview");
+          if(val.length>=11){if(!prev){prev=document.createElement("div");prev.className="youtube-preview";fields.appendChild(prev);}prev.innerHTML=`<iframe src="https://www.youtube.com/embed/${val}?rel=0" allowfullscreen></iframe>`;}
+          else if(prev){prev.remove();}
+        });
+        fields.appendChild(titleIn);fields.appendChild(urlIn);
+        if(vid.youtubeId){const prev=document.createElement("div");prev.className="youtube-preview";prev.innerHTML=`<iframe src="https://www.youtube.com/embed/${vid.youtubeId}?rel=0" allowfullscreen></iframe>`;fields.appendChild(prev);}
+        const del=document.createElement("button");del.className="delete-btn";del.textContent="✕";del.onclick=()=>{submodulesData[subIdx].videos.splice(vi,1);renderSubVideos(subIdx,container);};
+        div.appendChild(fields);div.appendChild(del);
+        container.appendChild(div);
+      });
+    }
+
+    function addSubmodule(){
+      const newOrder=submodulesData.length>0?`1.${submodulesData.length+1}`:`1.1`;
+      submodulesData.push({tempId:`sub${Date.now()}`,title:"",description:"",order:newOrder,bannerImage:"",content:"",contentBlocks:[],videos:[],images:[],_open:true});
+      renderSubmodules();
+    }
+
+    window.deleteSubmod=function(idx){if(confirm("Delete this sub-module and all its content?"))submodulesData.splice(idx,1),renderSubmodules();};
+
+    // ── Module-level videos ───────────────────────────────────────────────────
     function renderVideos() {
       const list=document.getElementById("videos-list");
       if(!list)return;
       list.innerHTML="";
-      if(!videosData.length){
-        list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No videos yet. Add one below.</p>`;
-        return;
-      }
+      if(!videosData.length){list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No videos yet.</p>`;return;}
       videosData.forEach((vid,idx)=>{
-        const ytId=vid.youtubeId||"";
-        const div=document.createElement("div");
-        div.className="item-card"; div.draggable=true; div.dataset.idx=idx; div.dataset.type="video";
-
-        const handle=document.createElement("div"); handle.className="drag-handle"; handle.textContent="⠿";
-
-        const fields=document.createElement("div"); fields.className="item-fields";
-
-        const titleIn=document.createElement("input"); titleIn.type="text"; titleIn.placeholder="Video title"; titleIn.value=vid.title||"";
-        titleIn.style.cssText="background:var(--surface);border:1px solid var(--gold-border);border-radius:var(--radius);padding:10px;color:var(--text);font-family:var(--font);font-size:14px;";
-        titleIn.addEventListener("input",()=>{ videosData[idx].title=titleIn.value; });
-
-        const urlIn=document.createElement("input"); urlIn.type="text"; urlIn.placeholder="YouTube URL or video ID"; urlIn.value=ytId;
-        urlIn.style.cssText="background:var(--surface);border:1px solid var(--gold-border);border-radius:var(--radius);padding:10px;color:var(--text);font-family:var(--font);font-size:14px;";
-        urlIn.addEventListener("input",()=>{
-          let val=urlIn.value.trim();
-          const match=val.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
-          if(match)val=match[1];
+        const div=document.createElement("div");div.className="item-card";div.draggable=true;div.dataset.idx=idx;div.dataset.type="video";
+        const handle=document.createElement("div");handle.className="drag-handle";handle.textContent="⠿";
+        const fields=document.createElement("div");fields.className="item-fields";
+        const titleIn=makeInput("text","Video title",vid.title||"",e=>videosData[idx].title=e.target.value);
+        const urlIn=makeInput("text","YouTube URL or video ID",vid.youtubeId||"",e=>{
+          let val=e.target.value.trim();const match=val.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);if(match)val=match[1];
           videosData[idx].youtubeId=val;
-          let preview=fields.querySelector(".youtube-preview");
-          if(val.length>=11){
-            if(!preview){preview=document.createElement("div");preview.className="youtube-preview";fields.appendChild(preview);}
-            preview.innerHTML=`<iframe src="https://www.youtube.com/embed/${val}?rel=0" allowfullscreen></iframe>`;
-          } else if(preview){preview.innerHTML="";}
+          let prev=fields.querySelector(".youtube-preview");
+          if(val.length>=11){if(!prev){prev=document.createElement("div");prev.className="youtube-preview";fields.appendChild(prev);}prev.innerHTML=`<iframe src="https://www.youtube.com/embed/${val}?rel=0" allowfullscreen></iframe>`;}
+          else if(prev){prev.remove();}
         });
-
-        fields.appendChild(titleIn);
-        fields.appendChild(urlIn);
-        if(ytId){
-          const preview=document.createElement("div"); preview.className="youtube-preview";
-          preview.innerHTML=`<iframe src="https://www.youtube.com/embed/${ytId}?rel=0" allowfullscreen></iframe>`;
-          fields.appendChild(preview);
-        }
-
-        const delBtn=document.createElement("button"); delBtn.className="delete-btn"; delBtn.textContent="✕"; delBtn.onclick=()=>deleteVideo(idx);
-        div.appendChild(handle); div.appendChild(fields); div.appendChild(delBtn);
-        addDrag(div,"video");
-        list.appendChild(div);
+        fields.appendChild(titleIn);fields.appendChild(urlIn);
+        if(vid.youtubeId){const prev=document.createElement("div");prev.className="youtube-preview";prev.innerHTML=`<iframe src="https://www.youtube.com/embed/${vid.youtubeId}?rel=0" allowfullscreen></iframe>`;fields.appendChild(prev);}
+        const del=document.createElement("button");del.className="delete-btn";del.textContent="✕";del.onclick=()=>{if(confirm("Delete?"))videosData.splice(idx,1),renderVideos();};
+        div.appendChild(handle);div.appendChild(fields);div.appendChild(del);
+        addDrag(div,"video");list.appendChild(div);
       });
     }
 
-    window.addVideo=()=>{ videosData.push({tempId:`v${Date.now()}`,title:"",youtubeId:"",order:videosData.length+1}); renderVideos(); };
-    window.deleteVideo=(idx)=>{ if(confirm("Delete this video?")){ videosData.splice(idx,1); renderVideos(); } };
+    function addVideo(){videosData.push({tempId:`v${Date.now()}`,title:"",youtubeId:"",order:videosData.length+1});renderVideos();}
 
     // ── Questions ─────────────────────────────────────────────────────────────
     function renderQuestions() {
       const list=document.getElementById("questions-list");
       if(!list)return;
       list.innerHTML="";
-      if(!questionsData.length){
-        list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No questions yet. Add one below.</p>`;
-        return;
-      }
+      if(!questionsData.length){list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No questions yet.</p>`;return;}
       questionsData.forEach((q,idx)=>{
-        const options=[...(q.options||["","","",""])];
-        while(options.length<4)options.push("");
-
-        const div=document.createElement("div");
-        div.className="item-card"; div.draggable=true; div.dataset.idx=idx; div.dataset.type="question";
-        div.style.flexDirection="column";
-
-        const inner=document.createElement("div");
-        inner.style.cssText="display:flex;gap:8px;align-items:flex-start;width:100%;";
-
-        const handle=document.createElement("div"); handle.className="drag-handle"; handle.textContent="⠿";
-
-        const fields=document.createElement("div"); fields.className="item-fields"; fields.style.flex="1";
-
-        const qIn=document.createElement("input"); qIn.type="text"; qIn.placeholder=`Question ${idx+1}`;
-        qIn.value=q.question||"";
-        qIn.style.cssText="background:var(--surface);border:1px solid var(--gold-border);border-radius:var(--radius);padding:10px;color:var(--text);font-family:var(--font);font-size:14px;width:100%;";
-        qIn.addEventListener("input",()=>{ questionsData[idx].question=qIn.value; });
+        const options=[...(q.options||["","","",""])];while(options.length<4)options.push("");
+        const div=document.createElement("div");div.className="item-card";div.draggable=true;div.dataset.idx=idx;div.dataset.type="question";div.style.flexDirection="column";
+        const inner=document.createElement("div");inner.style.cssText="display:flex;gap:8px;align-items:flex-start;width:100%;";
+        const handle=document.createElement("div");handle.className="drag-handle";handle.textContent="⠿";
+        const fields=document.createElement("div");fields.className="item-fields";fields.style.flex="1";
+        const qIn=makeInput("text",`Question ${idx+1}`,q.question||"",e=>questionsData[idx].question=e.target.value);
         fields.appendChild(qIn);
-
-        const optLabel=document.createElement("label"); optLabel.textContent="Answer options — radio = correct";
-        optLabel.style.cssText="margin-top:8px;margin-bottom:4px;display:block;";
-        fields.appendChild(optLabel);
-
+        const optLabel=document.createElement("label");optLabel.textContent="Options — radio = correct";optLabel.style.marginTop="8px";fields.appendChild(optLabel);
         options.forEach((opt,oi)=>{
-          const row=document.createElement("div"); row.className="option-row";
-          const radio=document.createElement("input"); radio.type="radio"; radio.name=`correct_${idx}`; radio.className="correct-radio";
-          radio.checked=(q.correctIndex||0)===oi;
-          radio.addEventListener("change",()=>{ questionsData[idx].correctIndex=oi; });
-          const letter=document.createElement("span");
-          letter.textContent=String.fromCharCode(65+oi);
-          letter.style.cssText="font-family:var(--cinzel);font-size:10px;color:var(--text3);width:18px;flex-shrink:0;";
-          const optIn=document.createElement("input"); optIn.type="text"; optIn.placeholder=`Option ${String.fromCharCode(65+oi)}`;
-          optIn.value=opt;
-          optIn.style.cssText="background:var(--surface);border:1px solid var(--gold-border);border-radius:var(--radius);padding:8px 10px;color:var(--text);font-family:var(--font);font-size:13px;flex:1;";
-          optIn.addEventListener("input",()=>{ questionsData[idx].options[oi]=optIn.value; });
-          row.appendChild(radio); row.appendChild(letter); row.appendChild(optIn);
-          fields.appendChild(row);
+          const row=document.createElement("div");row.className="option-row";
+          const radio=document.createElement("input");radio.type="radio";radio.name=`correct_${idx}`;radio.className="correct-radio";radio.checked=(q.correctIndex||0)===oi;
+          radio.addEventListener("change",()=>questionsData[idx].correctIndex=oi);
+          const letter=document.createElement("span");letter.textContent=String.fromCharCode(65+oi);letter.style.cssText="font-family:var(--cinzel);font-size:10px;color:var(--text3);width:18px;flex-shrink:0;";
+          const optIn=makeInput("text",`Option ${String.fromCharCode(65+oi)}`,opt,e=>questionsData[idx].options[oi]=e.target.value);
+          row.appendChild(radio);row.appendChild(letter);row.appendChild(optIn);fields.appendChild(row);
         });
-
-        const delBtn=document.createElement("button"); delBtn.className="delete-btn"; delBtn.textContent="✕"; delBtn.onclick=()=>deleteQuestion(idx);
-        inner.appendChild(handle); inner.appendChild(fields); inner.appendChild(delBtn);
-        div.appendChild(inner);
-        addDrag(div,"question");
-        list.appendChild(div);
+        const del=document.createElement("button");del.className="delete-btn";del.textContent="✕";del.onclick=()=>{if(confirm("Delete?"))questionsData.splice(idx,1),renderQuestions();};
+        inner.appendChild(handle);inner.appendChild(fields);inner.appendChild(del);div.appendChild(inner);
+        addDrag(div,"question");list.appendChild(div);
       });
     }
 
-    window.addQuestion=()=>{ questionsData.push({tempId:`q${Date.now()}`,question:"",options:["","","",""],correctIndex:0,order:questionsData.length+1}); renderQuestions(); };
-    window.deleteQuestion=(idx)=>{ if(confirm("Delete this question?")){ questionsData.splice(idx,1); renderQuestions(); } };
+    function addQuestion(){questionsData.push({tempId:`q${Date.now()}`,question:"",options:["","","",""],correctIndex:0,order:questionsData.length+1});renderQuestions();}
 
     // ── Drag ──────────────────────────────────────────────────────────────────
-    function addDrag(el,type) {
-      el.addEventListener("dragstart",e=>{ dragSrc=el; el.classList.add("dragging"); e.dataTransfer.effectAllowed="move"; });
-      el.addEventListener("dragend",()=>{ el.classList.remove("dragging"); dragSrc=null; });
-      el.addEventListener("dragover",e=>{ e.preventDefault(); });
+    function addDrag(el,type){
+      el.addEventListener("dragstart",e=>{dragSrc=el;el.classList.add("dragging");e.dataTransfer.effectAllowed="move";});
+      el.addEventListener("dragend",()=>{el.classList.remove("dragging");dragSrc=null;});
+      el.addEventListener("dragover",e=>e.preventDefault());
       el.addEventListener("drop",e=>{
-        e.preventDefault();
-        if(!dragSrc||dragSrc===el)return;
+        e.preventDefault();if(!dragSrc||dragSrc===el)return;
         const from=parseInt(dragSrc.dataset.idx),to=parseInt(el.dataset.idx);
         if(type==="content"){const i=contentBlocksData.splice(from,1)[0];contentBlocksData.splice(to,0,i);renderContentBlocks();}
         else if(type==="video"){const i=videosData.splice(from,1)[0];videosData.splice(to,0,i);renderVideos();}
@@ -527,46 +625,61 @@
     }
 
     // ── Save ──────────────────────────────────────────────────────────────────
-    window.saveAll = async function() {
-      const btn=document.querySelector(".save-bar .btn-primary");
+    async function saveAll() {
+      const btn=document.getElementById("save-all-btn");
       const status=document.getElementById("save-status");
-      btn.textContent="Saving..."; btn.disabled=true;
+      btn.textContent="Saving...";btn.disabled=true;
       try {
         const title=document.getElementById("mod-title").value.trim();
         const description=document.getElementById("mod-desc").value.trim();
+        const bannerImage=document.getElementById("mod-banner").value.trim();
         const passingScore=parseInt(document.getElementById("mod-passing").value)||4;
         const totalQuestions=parseInt(document.getElementById("mod-total").value)||5;
         const content=contentBlocksData.map(b=>b.text).join("\n\n");
 
-        await setDoc(doc(db,"modules",currentModuleId),{
-          id:currentModuleId,order:parseInt(currentModuleId.split("_")[1]),
-          title,description,content,passingScore,totalQuestions
-        });
+        // Save module doc
+        await setDoc(doc(db,"modules",currentModuleId),{id:currentModuleId,order:parseInt(currentModuleId.split("_")[1]),title,description,content,bannerImage,passingScore,totalQuestions});
 
+        // Save module-level videos
         const oldVids=await getDocs(collection(db,"modules",currentModuleId,"videos"));
         await Promise.all(oldVids.docs.map(d=>deleteDoc(d.ref)));
-        await Promise.all(videosData.map((v,i)=>{
-          const id=v.id||`video_${i+1}`;
-          return setDoc(doc(db,"modules",currentModuleId,"videos",id),{id,order:i+1,title:v.title||"",youtubeId:v.youtubeId||""});
-        }));
+        await Promise.all(videosData.map((v,i)=>setDoc(doc(db,"modules",currentModuleId,"videos",v.id||`video_${i+1}`),{id:v.id||`video_${i+1}`,order:i+1,title:v.title||"",youtubeId:v.youtubeId||""})));
 
+        // Save questions
         const oldQues=await getDocs(collection(db,"modules",currentModuleId,"questions"));
         await Promise.all(oldQues.docs.map(d=>deleteDoc(d.ref)));
-        await Promise.all(questionsData.map((q,i)=>{
-          const id=q.id||`q${i+1}`;
-          return setDoc(doc(db,"modules",currentModuleId,"questions",id),{order:i+1,question:q.question||"",options:q.options||["","","",""],correctIndex:q.correctIndex||0});
+        await Promise.all(questionsData.map((q,i)=>setDoc(doc(db,"modules",currentModuleId,"questions",q.id||`q${i+1}`),{order:i+1,question:q.question||"",options:q.options||["","","",""],correctIndex:q.correctIndex||0})));
+
+        // Save submodules
+        const oldSubs=await getDocs(collection(db,"modules",currentModuleId,"submodules"));
+        await Promise.all(oldSubs.docs.map(d=>deleteDoc(d.ref)));
+
+        await Promise.all(submodulesData.map(async (sub,i)=>{
+          const subId=sub.id||`sub_${i+1}`;
+          const subContent=(sub.contentBlocks||[]).map(b=>b.text).join("\n\n");
+          await setDoc(doc(db,"modules",currentModuleId,"submodules",subId),{
+            id:subId,order:sub.order||`1.${i+1}`,title:sub.title||"",description:sub.description||"",content:subContent,bannerImage:sub.bannerImage||""
+          });
+
+          // Sub videos
+          const oldSV=await getDocs(collection(db,"modules",currentModuleId,"submodules",subId,"videos"));
+          await Promise.all(oldSV.docs.map(d=>deleteDoc(d.ref)));
+          await Promise.all((sub.videos||[]).map((v,vi)=>setDoc(doc(db,"modules",currentModuleId,"submodules",subId,"videos",v.id||`sv_${vi+1}`),{id:v.id||`sv_${vi+1}`,order:vi+1,title:v.title||"",youtubeId:v.youtubeId||""})));
+
+          // Sub images
+          const oldSI=await getDocs(collection(db,"modules",currentModuleId,"submodules",subId,"images"));
+          await Promise.all(oldSI.docs.map(d=>deleteDoc(d.ref)));
+          await Promise.all((sub.images||[]).map((img,ii)=>setDoc(doc(db,"modules",currentModuleId,"submodules",subId,"images",img.id||`img_${ii+1}`),{id:img.id||`img_${ii+1}`,order:ii+1,url:img.url||"",caption:img.caption||""})));
         }));
 
-        status.textContent="✓ Saved"; status.className="save-status saved";
-        showToast("Module saved successfully.","success");
+        status.textContent="✓ Saved";status.className="save-status saved";
+        showToast("Module saved.","success");
         setTimeout(()=>{status.textContent="";},3000);
-      } catch(e) {
+      } catch(e){
         console.error("Save error:",e);
         showToast("Save failed: "+e.message,"error");
-      } finally {
-        btn.textContent="Save All Changes"; btn.disabled=false;
-      }
-    };
+      } finally{btn.textContent="Save All Changes";btn.disabled=false;}
+    }
 
     function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
   </script>
