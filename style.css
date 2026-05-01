@@ -318,3 +318,14 @@ label {
   .card { padding: 1rem; }
   .nav { padding: 0 1rem; }
 }
+
+/* ── Nav brand (matches other Belladonna apps) ── */
+.nav-brand-link { text-decoration: none; }
+.nav-left { display: flex; align-items: center; gap: 14px; }
+.nav-logo-img { height: 38px; width: auto; object-fit: contain; }
+.nav-divider { color: var(--border2); font-size: 20px; margin: 0 2px; line-height: 1; }
+.nav-subtitle { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--text3); }
+.nav-name { font-family: var(--cinzel); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text2); }
+.nav-btn { font-family: var(--cinzel); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; border-radius: var(--radius); padding: 8px 16px; cursor: pointer; transition: all .2s; border: 1px solid var(--gold-border); background: transparent; color: var(--gold); display: inline-flex; align-items: center; text-decoration: none; }
+.nav-btn-ghost { background: transparent; color: var(--gold); }
+.nav-btn-ghost:hover { background: var(--gold-dim); color: var(--gold2); text-decoration: none; }
