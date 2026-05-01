@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Belladonna Training — Dashboard</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+  <div id="nav-placeholder"></div>
+
+  <div class="loading-wrap" id="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <main id="main" style="display:none;">
+    <div class="page-wrap">
+
+      <!-- Header -->
+      <div class="fade-up" style="margin-bottom:2rem;">
+        <p class="text-brand" style="font-size:13px;font-weight:500;margin-bottom:4px;">Welcome back,</p>
+        <h1 id="user-name">Host</h1>
+        <p id="cert-banner" style="display:none;margin-top:0.75rem;color:var(--success);font-weight:500;font-size:15px;">
+          🎓 Belladonna Certified Host
+        </p>
+        <p id="cert-tagline" style="margin-top:0.5rem;">
+          Complete all 6 modules to earn your Belladonna Certified Host credential.
+        </p>
+      </div>
+
+      <!-- Progress summary -->
+      <div class="card fade-up" style="margin-bottom:1.5rem;animation-delay:0.05s;">
+        <div class="flex justify-between items-center" style="margin-bottom:10px;">
+          <span style="font-size:14px;font-weight:500;">Overall progress</span>
+          <span id="prog-label" class="text-brand" style="font-size:14px;font-weight:500;">0 / 6 modules</span>
+        </div>
+        <div class="prog-track">
+          <div class="prog-fill" id="prog-fill" style="width:0%"></div>
+        </div>
+        <p id="prog-note" style="display:none;font-size:13px;color:var(--warning);margin-top:10px;">
+          All quizzes passed! Your manager will schedule your Dry Run to complete certification.
+        </p>
+      </div>
+
+      <!-- Module list -->
+      <div id="module-list"></div>
+
+      <!-- Certification checklist -->
+      <div class="card fade-up" style="margin-top:1.5rem;animation-delay:0.5s;">
+        <h3 style="margin-bottom:1rem;">Certification checklist</h3>
+        <div id="cert-checklist"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <div class="toast-wrap" id="toast-wrap"></div>
+
+  <script type="module">
+    import { requireAuth, renderNav, loadModules, loadUserProgress, getModuleStatus, doLogout, db } from "./firebase-init.js";
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    window._logout = doLogout;
+
+    const MODULE_PAGES = {
+      module_1: "module1.html", module_2: "module2.html",
+      module_3: "module3.html", module_4: "module4.html",
+      module_5: "module5.html", module_6: "module6.html",
+    };
+
+    requireAuth(async (user, profile) => {
+      // Nav
+      document.getElementById("nav-placeholder").innerHTML =
+        renderNav(profile, profile.role === "admin");
+
+      // Load data
+      const [modules, progress] = await Promise.all([
+        loadModules(),
+        loadUserProgress(user.uid),
+      ]);
+
+      const certSnap = await getDoc(doc(db, "certifications", user.uid));
+      const cert = certSnap.exists() ? certSnap.data() : {};
+
+      // Header
+      document.getElementById("user-name").textContent = profile.name || "Host";
+      if (profile.certified) {
+        document.getElementById("cert-banner").style.display = "block";
+        document.getElementById("cert-tagline").style.display = "none";
+      }
+
+      // Progress bar
+      const passed = modules.filter(m => progress[m.id]?.status === "passed").length;
+      const pct = Math.round((passed / modules.length) * 100);
+      document.getElementById("prog-fill").style.width = pct + "%";
+      document.getElementById("prog-label").textContent = `${passed} / ${modules.length} modules`;
+      if (passed === modules.length && !profile.certified) {
+        document.getElementById("prog-note").style.display = "block";
+      }
+
+      // Module list
+      const list = document.getElementById("module-list");
+      modules.forEach((mod, idx) => {
+        const status = getModuleStatus(modules, progress, idx);
+        const prog = progress[mod.id];
+        const locked = status === "locked";
+
+        const statusBadge = {
+          passed: `<span class="badge badge-pass">Passed</span>`,
+          failed: `<span class="badge badge-fail">Retake</span>`,
+          in_progress: `<span class="badge badge-active">In progress</span>`,
+          available: `<span class="badge badge-active">Start</span>`,
+          locked: `<span class="badge badge-locked">Locked</span>`,
+        }[status];
+
+        const circleClass = status === "passed" ? "done" : locked ? "locked" : "current";
+        const circleContent = status === "passed" ? "✓" : mod.order;
+        const scoreNote = prog?.quizScore != null
+          ? `· Quiz: ${prog.quizScore}/${mod.totalQuestions}` : "";
+
+        const href = locked ? "#" : (MODULE_PAGES[mod.id] || "#");
+        const tag = locked ? "div" : "a";
+
+        list.innerHTML += `
+          <${tag} ${locked ? "" : `href="${href}"`}
+            class="module-row ${status === "in_progress" ? "active-module" : ""} ${locked ? "locked" : ""}"
+            style="animation-delay:${0.07*idx + 0.1}s;"
+          >
+            <div class="mod-circle ${circleClass}">${circleContent}</div>
+            <div style="flex:1;">
+              <div style="font-size:15px;font-weight:500;margin-bottom:2px;">${mod.title}</div>
+              <div class="text-muted">${mod.description} ${scoreNote}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+              ${statusBadge}
+              ${!locked ? `<span style="color:var(--brand);font-size:14px;">→</span>` : ""}
+            </div>
+          </${tag}>`;
+      });
+
+      // Cert checklist
+      const steps = [
+        { key: "quizzesPassed", label: "All module quizzes passed" },
+        { key: "dryRunComplete", label: "Dry run completed", dateKey: "dryRunDate" },
+        { key: "shadowGigComplete", label: "Shadow gig attended", dateKey: "shadowGigDate" },
+        { key: "soloLaunchComplete", label: "Solo launch completed", dateKey: "soloLaunchDate" },
+      ];
+      const cl = document.getElementById("cert-checklist");
+      steps.forEach(step => {
+        const done = cert[step.key];
+        const dateVal = step.dateKey && cert[step.dateKey];
+        const dateStr = dateVal
+          ? new Date(dateVal.seconds * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+          : "";
+        cl.innerHTML += `
+          <div class="check-row">
+            <div class="check-dot ${done ? "done" : "pending"}">${done ? "✓" : "○"}</div>
+            <span style="flex:1;color:${done ? "var(--ink)" : "var(--ink-3)"};">${step.label}</span>
+            <span class="text-muted">${done ? (dateStr || "Complete") : "Pending"}</span>
+          </div>`;
+      });
+
+      // Show page
+      document.getElementById("loading").style.display = "none";
+      document.getElementById("main").style.display = "block";
+    });
+  </script>
+</body>
+</html>
