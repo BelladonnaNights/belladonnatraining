@@ -6,62 +6,55 @@
   <title>Belladonna Training — Admin</title>
   <link rel="stylesheet" href="style.css"/>
   <style>
-    /* ── Tabs ── */
-    .tabs { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:2rem; }
-    .tab { padding:12px 24px; font-size:10px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; font-family:var(--cinzel); cursor:pointer; border:none; background:transparent; color:var(--text3); border-bottom:2px solid transparent; margin-bottom:-1px; transition:all .15s; }
-    .tab:hover { color:var(--text2); }
-    .tab.active { color:var(--gold); border-bottom-color:var(--gold); }
-    .tab-panel { display:none; }
-    .tab-panel.active { display:block; }
-
-    /* ── Trainee table ── */
-    .trainee-row { background:var(--surface); border-bottom:1px solid var(--border); }
-    .trainee-header { padding:1rem 1.5rem; display:flex; align-items:center; gap:1rem; cursor:pointer; transition:background .15s; }
-    .trainee-header:hover { background:var(--surface2); }
-    .trainee-header.expanded { background:var(--surface2); border-left:2px solid var(--gold-border); }
-    .trainee-detail { padding:1rem 1.5rem 1.25rem; background:var(--surface2); border-top:1px solid var(--border); display:none; }
-    .trainee-detail.open { display:block; }
-    .detail-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; }
-    .detail-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1rem; }
-    .detail-card-label { font-family:var(--cinzel); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--text3); margin-bottom:8px; }
-    .quiz-line { display:flex; justify-content:space-between; font-size:12px; padding:4px 0; border-bottom:1px solid var(--border); font-family:var(--font); }
-    .quiz-line:last-child { border-bottom:none; }
-    .chevron { font-size:12px; color:var(--text3); transition:transform .18s; flex-shrink:0; }
-    .chevron.open { transform:rotate(180deg); }
-
-    /* ── Add trainee form ── */
-    .add-trainee-form { background:var(--surface); border:1px solid var(--gold-border); border-radius:var(--radius-lg); padding:1.5rem; margin-bottom:2rem; }
-    .add-trainee-form h3 { font-family:var(--display); font-size:1.4rem; letter-spacing:.06em; margin-bottom:1rem; }
-    .form-row { display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:10px; align-items:flex-end; }
-    @media(max-width:700px) { .form-row { grid-template-columns:1fr; } }
-    .form-field { display:flex; flex-direction:column; }
-
-    /* ── Content editor ── */
-    .module-nav { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:1.5rem; }
-    .mod-tab { padding:6px 16px; border-radius:99px; font-family:var(--cinzel); font-size:10px; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; border:1px solid var(--border2); background:transparent; color:var(--text3); transition:all .15s; }
-    .mod-tab:hover { border-color:var(--gold-border); color:var(--gold); }
-    .mod-tab.active { background:var(--gold-dim); border-color:var(--gold-border2); color:var(--gold2); }
-    .editor-section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); margin-bottom:1rem; overflow:hidden; }
-    .editor-section-header { padding:12px 16px; background:var(--surface2); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
-    .editor-section-title { font-family:var(--cinzel); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text2); }
-    .editor-section-body { padding:1rem; }
-    .item-card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); padding:10px 12px; margin-bottom:8px; display:flex; gap:8px; align-items:flex-start; }
-    .item-card.dragging { opacity:.4; }
-    .item-fields { flex:1; display:flex; flex-direction:column; gap:6px; }
-    .drag-handle { cursor:grab; color:var(--text3); padding:6px 4px; font-size:16px; flex-shrink:0; user-select:none; }
-    .drag-handle:active { cursor:grabbing; }
-    .option-row { display:flex; gap:6px; align-items:center; }
-    .option-row input { flex:1; }
-    .correct-radio { width:16px; height:16px; accent-color:var(--gold); flex-shrink:0; cursor:pointer; }
-    .add-item-btn { display:flex; align-items:center; gap:6px; padding:8px 14px; font-size:10px; font-family:var(--cinzel); letter-spacing:.1em; text-transform:uppercase; color:var(--gold); border:1px dashed var(--gold-border); background:var(--gold-dim); border-radius:var(--radius); cursor:pointer; transition:all .15s; width:100%; justify-content:center; margin-top:4px; }
-    .add-item-btn:hover { background:rgba(201,168,76,.18); }
-    .save-bar { position:sticky; bottom:0; background:var(--bg); border-top:1px solid var(--border); padding:1rem 0; margin-top:1rem; display:flex; justify-content:flex-end; gap:10px; align-items:center; }
-    .save-status { font-family:var(--cinzel); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--text3); }
-    .save-status.saved { color:var(--success); }
-    .delete-btn { background:none; border:none; cursor:pointer; color:var(--text3); font-size:14px; padding:4px 6px; flex-shrink:0; transition:color .15s; }
-    .delete-btn:hover { color:var(--danger); }
-    .youtube-preview { margin-top:8px; border-radius:var(--radius); overflow:hidden; }
-    .youtube-preview iframe { width:100%; aspect-ratio:16/9; border:none; display:block; }
+    .tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:2rem;}
+    .tab{padding:12px 24px;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-family:var(--cinzel);cursor:pointer;border:none;background:transparent;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;}
+    .tab:hover{color:var(--text2);}
+    .tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+    .tab-panel{display:none;}
+    .tab-panel.active{display:block;}
+    .trainee-row{background:var(--surface);border-bottom:1px solid var(--border);}
+    .trainee-header{padding:1rem 1.5rem;display:flex;align-items:center;gap:1rem;cursor:pointer;transition:background .15s;}
+    .trainee-header:hover{background:var(--surface2);}
+    .trainee-header.expanded{background:var(--surface2);border-left:2px solid var(--gold-border);}
+    .trainee-detail{padding:1rem 1.5rem 1.25rem;background:var(--surface2);border-top:1px solid var(--border);display:none;}
+    .trainee-detail.open{display:block;}
+    .detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;}
+    .detail-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;}
+    .detail-card-label{font-family:var(--cinzel);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;}
+    .quiz-line{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);font-family:var(--font);}
+    .quiz-line:last-child{border-bottom:none;}
+    .chevron{font-size:12px;color:var(--text3);transition:transform .18s;flex-shrink:0;}
+    .chevron.open{transform:rotate(180deg);}
+    .add-trainee-form{background:var(--surface);border:1px solid var(--gold-border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:2rem;}
+    .add-trainee-form h3{font-family:var(--display);font-size:1.4rem;letter-spacing:.06em;margin-bottom:1rem;}
+    .form-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:flex-end;}
+    @media(max-width:700px){.form-row{grid-template-columns:1fr;}}
+    .form-field{display:flex;flex-direction:column;}
+    .module-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.5rem;}
+    .mod-tab{padding:6px 16px;border-radius:99px;font-family:var(--cinzel);font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text3);transition:all .15s;}
+    .mod-tab:hover{border-color:var(--gold-border);color:var(--gold);}
+    .mod-tab.active{background:var(--gold-dim);border-color:var(--gold-border2);color:var(--gold2);}
+    .editor-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:1rem;overflow:hidden;}
+    .editor-section-header{padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+    .editor-section-title{font-family:var(--cinzel);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text2);}
+    .editor-section-body{padding:1rem;}
+    .item-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px;display:flex;gap:8px;align-items:flex-start;}
+    .item-card.dragging{opacity:.4;}
+    .item-fields{flex:1;display:flex;flex-direction:column;gap:6px;}
+    .drag-handle{cursor:grab;color:var(--text3);padding:6px 4px;font-size:16px;flex-shrink:0;user-select:none;}
+    .drag-handle:active{cursor:grabbing;}
+    .option-row{display:flex;gap:6px;align-items:center;margin-bottom:6px;}
+    .option-row input[type=text]{flex:1;}
+    .correct-radio{width:16px;height:16px;accent-color:var(--gold);flex-shrink:0;cursor:pointer;}
+    .add-item-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;font-size:10px;font-family:var(--cinzel);letter-spacing:.1em;text-transform:uppercase;color:var(--gold);border:1px dashed var(--gold-border);background:var(--gold-dim);border-radius:var(--radius);cursor:pointer;transition:all .15s;width:100%;justify-content:center;margin-top:4px;}
+    .add-item-btn:hover{background:rgba(201,168,76,.18);}
+    .save-bar{position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--border);padding:1rem 0;margin-top:1rem;display:flex;justify-content:flex-end;gap:10px;align-items:center;}
+    .save-status{font-family:var(--cinzel);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);}
+    .save-status.saved{color:var(--success);}
+    .delete-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:4px 6px;flex-shrink:0;transition:color .15s;}
+    .delete-btn:hover{color:var(--danger);}
+    .youtube-preview{margin-top:8px;border-radius:var(--radius);overflow:hidden;}
+    .youtube-preview iframe{width:100%;aspect-ratio:16/9;border:none;display:block;}
   </style>
 </head>
 <body>
@@ -70,7 +63,6 @@
 
   <main id="main" style="display:none;">
     <div class="page-wrap-wide">
-
       <div class="fade-up" style="margin-bottom:1.5rem;">
         <p style="font-family:var(--cinzel);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;font-style:normal;">Admin Panel</p>
         <h1 class="gold-text">Training Management</h1>
@@ -81,40 +73,18 @@
         <button class="tab" onclick="switchTab('content')">Module Content</button>
       </div>
 
-      <!-- ── TRAINEES TAB ── -->
       <div class="tab-panel active" id="tab-trainees">
-
-        <!-- Stats -->
         <div id="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:2rem;"></div>
-
-        <!-- Add trainee -->
         <div class="add-trainee-form fade-up">
           <h3>Add New Trainee</h3>
           <div class="form-row">
-            <div class="form-field">
-              <label>Full name</label>
-              <input type="text" id="new-name" placeholder="Jordan Smith"/>
-            </div>
-            <div class="form-field">
-              <label>Email address</label>
-              <input type="email" id="new-email" placeholder="jordan@belladonna.com"/>
-            </div>
-            <div class="form-field">
-              <label>Temporary password</label>
-              <input type="text" id="new-password" placeholder="Minimum 6 characters"/>
-            </div>
-            <div class="form-field">
-              <label style="opacity:0;">Add</label>
-              <button class="btn btn-primary" id="add-trainee-btn" onclick="handleAddTrainee()">Add Trainee</button>
-            </div>
+            <div class="form-field"><label>Full name</label><input type="text" id="new-name" placeholder="Jordan Smith"/></div>
+            <div class="form-field"><label>Email address</label><input type="email" id="new-email" placeholder="jordan@belladonna.com"/></div>
+            <div class="form-field"><label>Temporary password</label><input type="text" id="new-password" placeholder="Min 6 characters"/></div>
+            <div class="form-field"><label style="opacity:0;">x</label><button class="btn btn-primary" id="add-trainee-btn" onclick="handleAddTrainee()">Add Trainee</button></div>
           </div>
           <div id="add-trainee-error" style="display:none;margin-top:10px;" class="error-msg"></div>
-          <p style="margin-top:10px;font-size:12px;color:var(--text3);font-style:normal;font-family:var(--font);">
-            The trainee will log in with this email and password. They can change their password later.
-          </p>
         </div>
-
-        <!-- Trainee list -->
         <div class="card fade-up" style="padding:0;overflow:hidden;animation-delay:.1s;">
           <div style="padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
             <h3>All Trainees</h3>
@@ -124,12 +94,10 @@
         </div>
       </div>
 
-      <!-- ── CONTENT TAB ── -->
       <div class="tab-panel" id="tab-content">
         <div class="module-nav" id="module-nav"></div>
         <div id="module-editor"></div>
       </div>
-
     </div>
   </main>
 
@@ -143,9 +111,9 @@
 
     const MODULES_COUNT = 6;
     const SIGNOFF_STEPS = [
-      { key:"dryRunComplete", label:"Dry Run", dateKey:"dryRunDate" },
-      { key:"shadowGigComplete", label:"Shadow Gig", dateKey:"shadowGigDate" },
-      { key:"soloLaunchComplete", label:"Solo Launch", dateKey:"soloLaunchDate" },
+      {key:"dryRunComplete",label:"Dry Run",dateKey:"dryRunDate"},
+      {key:"shadowGigComplete",label:"Shadow Gig",dateKey:"shadowGigDate"},
+      {key:"soloLaunchComplete",label:"Solo Launch",dateKey:"soloLaunchDate"},
     ];
     const MODULE_DEFS = [
       {id:"module_1",label:"Module 1 — Brand & Ethics"},
@@ -156,23 +124,23 @@
       {id:"module_6",label:"Module 6 — Marketing & The Hustle"},
     ];
 
-    let allTrainees = [], certMap = {}, progressMap = {};
-    let currentModuleId = "module_1";
-    let moduleData = {}, videosData = [], contentBlocksData = [], questionsData = [];
-    let dragSrc = null;
+    let allTrainees=[], certMap={}, progressMap={};
+    let currentModuleId="module_1";
+    let moduleData={}, videosData=[], contentBlocksData=[], questionsData=[];
+    let dragSrc=null;
 
-    // ── Tab switch ────────────────────────────────────────────────────────────
+    // expose to window so inline handlers can reach them
+    window._getData = () => ({videosData, contentBlocksData, questionsData});
+
     window.switchTab = function(tab) {
-      document.querySelectorAll(".tab").forEach((t,i) => t.classList.toggle("active", ["trainees","content"][i] === tab));
-      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      document.querySelectorAll(".tab").forEach((t,i)=>t.classList.toggle("active",["trainees","content"][i]===tab));
+      document.querySelectorAll(".tab-panel").forEach(p=>p.classList.remove("active"));
       document.getElementById(`tab-${tab}`).classList.add("active");
-      if (tab === "content" && !document.getElementById("module-nav").innerHTML) {
-        buildModuleNav();
-        loadModuleContent("module_1");
+      if (tab==="content" && !document.getElementById("module-nav").innerHTML) {
+        buildModuleNav(); loadModuleContent("module_1");
       }
     };
 
-    // ── Init ──────────────────────────────────────────────────────────────────
     requireAdmin(async (user, profile) => {
       document.getElementById("nav-placeholder").innerHTML = renderNav(profile, true);
       await loadTrainees();
@@ -187,110 +155,79 @@
       const password = document.getElementById("new-password").value.trim();
       const errEl = document.getElementById("add-trainee-error");
       const btn = document.getElementById("add-trainee-btn");
-
       errEl.style.display = "none";
-
-      if (!name || !email || !password) {
-        errEl.textContent = "Please fill in all three fields.";
-        errEl.style.display = "block";
-        return;
-      }
-      if (password.length < 6) {
-        errEl.textContent = "Password must be at least 6 characters.";
-        errEl.style.display = "block";
-        return;
-      }
-
-      btn.textContent = "Adding...";
-      btn.disabled = true;
-
+      if (!name||!email||!password) { errEl.textContent="Please fill in all three fields."; errEl.style.display="block"; return; }
+      if (password.length<6) { errEl.textContent="Password must be at least 6 characters."; errEl.style.display="block"; return; }
+      btn.textContent="Adding..."; btn.disabled=true;
       try {
         const result = await createTrainee(email, password, name);
         showToast(`${name} added successfully!`, "success");
-        document.getElementById("new-name").value = "";
-        document.getElementById("new-email").value = "";
-        document.getElementById("new-password").value = "";
-        // Add to local list
-        allTrainees.push({ id: result.uid, name, email, role: "trainee", certified: false });
-        progressMap[result.uid] = {};
-        certMap[result.uid] = {};
-        renderStats();
-        renderTrainees();
+        document.getElementById("new-name").value="";
+        document.getElementById("new-email").value="";
+        document.getElementById("new-password").value="";
+        allTrainees.push({id:result.uid,name,email,role:"trainee",certified:false});
+        progressMap[result.uid]={};
+        certMap[result.uid]={};
+        renderStats(); renderTrainees();
       } catch(e) {
-        let msg = "Failed to add trainee.";
-        if (e.code === "auth/email-already-in-use") msg = "That email is already registered.";
-        else if (e.code === "auth/invalid-email") msg = "Please enter a valid email address.";
-        errEl.textContent = msg;
-        errEl.style.display = "block";
-      } finally {
-        btn.textContent = "Add Trainee";
-        btn.disabled = false;
-      }
+        let msg="Failed to add trainee.";
+        if (e.code==="auth/email-already-in-use") msg="That email is already registered.";
+        else if (e.code==="auth/invalid-email") msg="Please enter a valid email address.";
+        else if (e.code==="auth/unauthorized-domain") msg="This domain isn't authorized in Firebase Auth settings yet.";
+        errEl.textContent=msg; errEl.style.display="block";
+      } finally { btn.textContent="Add Trainee"; btn.disabled=false; }
     };
 
-    // ── Load trainees ─────────────────────────────────────────────────────────
+    // ── Trainees ──────────────────────────────────────────────────────────────
     async function loadTrainees() {
-      const [usersSnap, certsSnap] = await Promise.all([
-        getDocs(collection(db, "users")),
-        getDocs(collection(db, "certifications")),
-      ]);
+      const [usersSnap, certsSnap] = await Promise.all([getDocs(collection(db,"users")), getDocs(collection(db,"certifications"))]);
       allTrainees = usersSnap.docs.map(d=>({id:d.id,...d.data()})).filter(u=>u.role!=="admin");
-      certsSnap.forEach(d => { certMap[d.id] = d.data(); });
+      certsSnap.forEach(d=>{ certMap[d.id]=d.data(); });
       await Promise.all(allTrainees.map(async u => {
         const snap = await getDocs(collection(db,"users",u.id,"progress"));
-        const p = {};
-        snap.forEach(d => { p[d.id] = d.data(); });
-        progressMap[u.id] = p;
+        const p={}; snap.forEach(d=>{p[d.id]=d.data();}); progressMap[u.id]=p;
       }));
-      renderStats();
-      renderTrainees();
+      renderStats(); renderTrainees();
     }
 
-    function countPassed(prog) { return Object.values(prog||{}).filter(p=>p.status==="passed").length; }
+    function countPassed(prog){return Object.values(prog||{}).filter(p=>p.status==="passed").length;}
 
     function renderStats() {
-      const certified = allTrainees.filter(t=>t.certified).length;
-      const inProgress = allTrainees.filter(t=>!t.certified&&countPassed(progressMap[t.id])>0).length;
-      const sg = document.getElementById("stats-grid");
-      sg.innerHTML = [
+      const certified=allTrainees.filter(t=>t.certified).length;
+      document.getElementById("stats-grid").innerHTML=[
         {label:"Total Trainees",value:allTrainees.length},
         {label:"Certified",value:certified},
-        {label:"In Progress",value:inProgress},
+        {label:"In Progress",value:allTrainees.filter(t=>!t.certified&&countPassed(progressMap[t.id])>0).length},
         {label:"Not Started",value:allTrainees.filter(t=>countPassed(progressMap[t.id])===0&&!t.certified).length},
       ].map(s=>`<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-num">${s.value}</div></div>`).join("");
-      document.getElementById("trainee-count").textContent = `${allTrainees.length} total`;
+      document.getElementById("trainee-count").textContent=`${allTrainees.length} total`;
     }
 
     function renderTrainees() {
-      const list = document.getElementById("trainee-list");
-      list.innerHTML = "";
+      const list=document.getElementById("trainee-list");
+      list.innerHTML="";
       if (!allTrainees.length) {
-        list.innerHTML = `<div style="padding:3rem;text-align:center;font-family:var(--serif);font-style:italic;color:var(--text3);">No trainees yet — add one above.</div>`;
+        list.innerHTML=`<div style="padding:3rem;text-align:center;font-family:var(--serif);font-style:italic;color:var(--text3);">No trainees yet — add one above.</div>`;
         return;
       }
-      const sorted = [...allTrainees].sort((a,b)=>countPassed(progressMap[b.id])-countPassed(progressMap[a.id]));
-      sorted.forEach(trainee => {
-        const passed = countPassed(progressMap[trainee.id]);
-        const pct = Math.round((passed/MODULES_COUNT)*100);
-        const cert = certMap[trainee.id]||{};
-        const dots = SIGNOFF_STEPS.map(s=>`<div title="${s.label}" style="width:8px;height:8px;border-radius:50%;background:${cert[s.key]?"var(--success)":"var(--surface3)"};border:1px solid ${cert[s.key]?"var(--success)":"var(--border2)"};"></div>`).join("");
-        const row = document.createElement("div");
-        row.className = "trainee-row";
-        row.id = `row-${trainee.id}`;
-        row.innerHTML = `
+      [...allTrainees].sort((a,b)=>countPassed(progressMap[b.id])-countPassed(progressMap[a.id])).forEach(trainee=>{
+        const passed=countPassed(progressMap[trainee.id]);
+        const pct=Math.round((passed/MODULES_COUNT)*100);
+        const cert=certMap[trainee.id]||{};
+        const dots=SIGNOFF_STEPS.map(s=>`<div title="${s.label}" style="width:8px;height:8px;border-radius:50%;background:${cert[s.key]?"var(--success)":"var(--surface3)"};border:1px solid ${cert[s.key]?"var(--success)":"var(--border2)"};"></div>`).join("");
+        const row=document.createElement("div");
+        row.className="trainee-row"; row.id=`row-${trainee.id}`;
+        row.innerHTML=`
           <div class="trainee-header" onclick="toggleTrainee('${trainee.id}')">
             <div style="width:36px;height:36px;border-radius:50%;border:1px solid ${trainee.certified?"var(--success-border)":"var(--border2)"};background:${trainee.certified?"var(--success-bg)":"var(--surface2)"};display:flex;align-items:center;justify-content:center;font-family:var(--cinzel);font-size:12px;color:${trainee.certified?"var(--success)":"var(--text3)"};flex-shrink:0;">
               ${trainee.certified?"✓":trainee.name?.charAt(0)||"?"}
             </div>
             <div style="flex:1;min-width:0;">
-              <div style="font-family:var(--cinzel);font-size:13px;font-weight:600;letter-spacing:.04em;">
-                ${trainee.name}
-                ${trainee.certified?`<span class="badge badge-pass" style="margin-left:8px;font-size:9px;">Certified</span>`:""}
-              </div>
+              <div style="font-family:var(--cinzel);font-size:13px;font-weight:600;letter-spacing:.04em;">${trainee.name}${trainee.certified?`<span class="badge badge-pass" style="margin-left:8px;font-size:9px;">Certified</span>`:""}</div>
               <div style="font-size:12px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--font);">${trainee.email}</div>
             </div>
             <div style="width:120px;flex-shrink:0;">
-              <div style="font-family:var(--cinzel);font-size:10px;color:var(--text3);text-align:right;margin-bottom:4px;letter-spacing:.06em;">${passed}/${MODULES_COUNT} MODULES</div>
+              <div style="font-family:var(--cinzel);font-size:10px;color:var(--text3);text-align:right;margin-bottom:4px;letter-spacing:.06em;">${passed}/${MODULES_COUNT}</div>
               <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
             </div>
             <div style="display:flex;gap:3px;flex-shrink:0;padding:0 12px;">${dots}</div>
@@ -301,9 +238,9 @@
       });
     }
 
-    function buildDetail(trainee, cert) {
-      let quizRows = "";
-      for (let i=1;i<=MODULES_COUNT;i++) {
+    function buildDetail(trainee,cert) {
+      let quizRows="";
+      for(let i=1;i<=MODULES_COUNT;i++){
         const mId=`module_${i}`,mp=progressMap[trainee.id]?.[mId];
         let txt="Not started",color="var(--text3)";
         if(mp?.status==="passed"){txt=`✓ ${mp.quizScore}/${mp.totalQuestions||5}`;color="var(--success)";}
@@ -311,19 +248,18 @@
         else if(mp?.status==="in_progress"){txt="In progress";color="var(--gold)";}
         quizRows+=`<div class="quiz-line"><span style="color:var(--text2);">Module ${i}</span><span style="color:${color};">${txt}</span></div>`;
       }
-      let signoffCards = SIGNOFF_STEPS.map(step=>{
-        const done=cert[step.key],dateVal=cert[step.dateKey];
-        const dateStr=dateVal?new Date(dateVal.seconds*1000).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"";
-        return `<div class="detail-card">
-          <div class="detail-card-label">${step.label}</div>
-          ${done
-            ?`<div class="badge badge-pass" style="margin-bottom:10px;display:block;">✓ Complete${dateStr?" · "+dateStr:""}</div>
-               <button class="btn btn-ghost btn-sm" onclick="handleRevoke('${trainee.id}','${step.key}','${step.dateKey}')">Revoke</button>`
-            :`<div class="badge badge-locked" style="margin-bottom:10px;display:block;">Pending</div>
-               <button class="btn btn-primary btn-sm" onclick="handleSignOff('${trainee.id}','${step.key}','${step.dateKey}')">Sign Off ✓</button>`
-          }</div>`;
-      }).join("");
-      return `<div class="detail-grid"><div class="detail-card"><div class="detail-card-label">Quiz Progress</div>${quizRows}</div>${signoffCards}</div>`;
+      return `<div class="detail-grid">
+        <div class="detail-card"><div class="detail-card-label">Quiz Progress</div>${quizRows}</div>
+        ${SIGNOFF_STEPS.map(step=>{
+          const done=cert[step.key],dateVal=cert[step.dateKey];
+          const dateStr=dateVal?new Date(dateVal.seconds*1000).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"";
+          return `<div class="detail-card"><div class="detail-card-label">${step.label}</div>
+            ${done
+              ?`<div class="badge badge-pass" style="margin-bottom:10px;display:block;">✓${dateStr?" · "+dateStr:""}</div><button class="btn btn-ghost btn-sm" onclick="handleRevoke('${trainee.id}','${step.key}','${step.dateKey}')">Revoke</button>`
+              :`<div class="badge badge-locked" style="margin-bottom:10px;display:block;">Pending</div><button class="btn btn-primary btn-sm" onclick="handleSignOff('${trainee.id}','${step.key}','${step.dateKey}')">Sign Off ✓</button>`
+            }</div>`;
+        }).join("")}
+      </div>`;
     }
 
     window.toggleTrainee = function(uid) {
@@ -336,120 +272,94 @@
       header.classList.toggle("expanded",!isOpen);
     };
 
-    window.handleSignOff = async function(uid, stepKey, dateKey) {
+    window.handleSignOff = async function(uid,stepKey,dateKey) {
       try {
         await adminSignOffFn({traineeUid:uid,stepKey,dateKey});
         const snap=await getDoc(doc(db,"certifications",uid));
         certMap[uid]=snap.exists()?snap.data():{};
         const uSnap=await getDoc(doc(db,"users",uid));
-        if(uSnap.data()?.certified){
-          const t=allTrainees.find(t=>t.id===uid);
-          if(t) t.certified=true;
-          showToast(`${t?.name} is now Belladonna Certified!`,"success");
-        } else { showToast("Sign-off recorded.","success"); }
-        document.getElementById(`detail-${uid}`).innerHTML = buildDetail(allTrainees.find(t=>t.id===uid), certMap[uid]||{});
-      } catch(e) { showToast("Failed. Are Cloud Functions deployed?","error"); }
+        if(uSnap.data()?.certified){const t=allTrainees.find(t=>t.id===uid);if(t)t.certified=true;showToast(`${t?.name} is now Belladonna Certified!`,"success");}
+        else{showToast("Sign-off recorded.","success");}
+        document.getElementById(`detail-${uid}`).innerHTML=buildDetail(allTrainees.find(t=>t.id===uid),certMap[uid]||{});
+      } catch(e){showToast("Sign-off failed. Cloud Functions may not be deployed yet.","error");}
     };
 
-    window.handleRevoke = async function(uid, stepKey, dateKey) {
-      if (!confirm("Revoke this sign-off?")) return;
+    window.handleRevoke = async function(uid,stepKey,dateKey) {
+      if(!confirm("Revoke this sign-off?"))return;
       try {
         await revokeSignOffFn({traineeUid:uid,stepKey,dateKey});
         const snap=await getDoc(doc(db,"certifications",uid));
         certMap[uid]=snap.exists()?snap.data():{};
         const t=allTrainees.find(t=>t.id===uid);
-        if(t) t.certified=false;
+        if(t)t.certified=false;
         showToast("Sign-off revoked.","info");
-        document.getElementById(`detail-${uid}`).innerHTML = buildDetail(t, certMap[uid]||{});
-      } catch(e) { showToast("Failed to revoke.","error"); }
+        document.getElementById(`detail-${uid}`).innerHTML=buildDetail(t,certMap[uid]||{});
+      } catch(e){showToast("Failed to revoke.","error");}
     };
 
-    // ── CONTENT EDITOR ────────────────────────────────────────────────────────
+    // ── Content editor ────────────────────────────────────────────────────────
     function buildModuleNav() {
-      document.getElementById("module-nav").innerHTML = MODULE_DEFS.map(m=>
+      document.getElementById("module-nav").innerHTML=MODULE_DEFS.map(m=>
         `<button class="mod-tab ${m.id===currentModuleId?"active":""}" onclick="selectModule('${m.id}',this)">${m.label}</button>`
       ).join("");
     }
 
-    window.selectModule = function(moduleId, btn) {
-      currentModuleId = moduleId;
+    window.selectModule = function(moduleId,btn) {
+      currentModuleId=moduleId;
       document.querySelectorAll(".mod-tab").forEach(b=>b.classList.remove("active"));
       btn.classList.add("active");
       loadModuleContent(moduleId);
     };
 
     async function loadModuleContent(moduleId) {
-      const editor = document.getElementById("module-editor");
-      editor.innerHTML = `<div class="loading-wrap" style="min-height:200px;"><div class="spinner"></div></div>`;
+      const editor=document.getElementById("module-editor");
+      editor.innerHTML=`<div class="loading-wrap" style="min-height:200px;"><div class="spinner"></div></div>`;
       try {
-        const [modSnap, vidSnap, queSnap] = await Promise.all([
+        const [modSnap,vidSnap,queSnap]=await Promise.all([
           getDoc(doc(db,"modules",moduleId)),
           getDocs(query(collection(db,"modules",moduleId,"videos"),orderBy("order"))).catch(()=>({docs:[]})),
           getDocs(query(collection(db,"modules",moduleId,"questions"),orderBy("order"))).catch(()=>({docs:[]})),
         ]);
-        moduleData = modSnap.exists() ? {id:modSnap.id,...modSnap.data()} : {id:moduleId,title:"",description:"",content:"",passingScore:4,totalQuestions:5};
-        videosData = vidSnap.docs.map(d=>({id:d.id,...d.data()}));
-        questionsData = queSnap.docs.map(d=>({id:d.id,...d.data()}));
-        contentBlocksData = (moduleData.content||"").split("\n\n").filter(b=>b.trim()).map((b,i)=>({tempId:`b${i}`,text:b.trim()}));
+        moduleData=modSnap.exists()?{id:modSnap.id,...modSnap.data()}:{id:moduleId,title:"",description:"",content:"",passingScore:4,totalQuestions:5};
+        videosData=vidSnap.docs.map(d=>({id:d.id,...d.data()}));
+        questionsData=queSnap.docs.map(d=>({id:d.id,...d.data()}));
+        contentBlocksData=(moduleData.content||"").split("\n\n").filter(b=>b.trim()).map((b,i)=>({tempId:`b${i}`,text:b.trim()}));
         renderEditor();
       } catch(e) {
-        editor.innerHTML = `<div class="card" style="color:var(--danger);">Error loading module. ${e.message}</div>`;
+        editor.innerHTML=`<div class="card" style="color:var(--danger);">Error loading: ${e.message}</div>`;
       }
     }
 
     function renderEditor() {
-      document.getElementById("module-editor").innerHTML = `
+      document.getElementById("module-editor").innerHTML=`
         <div class="editor-section">
           <div class="editor-section-header"><span class="editor-section-title">Module Info</span></div>
           <div class="editor-section-body" style="display:flex;flex-direction:column;gap:10px;">
             <div><label>Title</label><input type="text" id="mod-title" value="${esc(moduleData.title||"")}" placeholder="e.g. Module 1 — Brand & Ethics"/></div>
-            <div><label>Short description (shows on dashboard)</label><input type="text" id="mod-desc" value="${esc(moduleData.description||"")}" placeholder="e.g. Identity, dress code, interaction ethics"/></div>
+            <div><label>Short description</label><input type="text" id="mod-desc" value="${esc(moduleData.description||"")}" placeholder="e.g. Identity, dress code, interaction ethics"/></div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
               <div><label>Passing score</label><input type="number" id="mod-passing" value="${moduleData.passingScore||4}" min="1" max="20"/></div>
               <div><label>Total questions</label><input type="number" id="mod-total" value="${moduleData.totalQuestions||5}" min="1" max="20"/></div>
             </div>
           </div>
         </div>
-
         <div class="editor-section">
-          <div class="editor-section-header">
-            <span class="editor-section-title">Content Sections</span>
-            <span style="font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic;">Text shown above the videos</span>
-          </div>
-          <div class="editor-section-body">
-            <div id="content-blocks-list"></div>
-            <button class="add-item-btn" onclick="addContentBlock()">+ Add Content Section</button>
-          </div>
+          <div class="editor-section-header"><span class="editor-section-title">Content Sections</span><span style="font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic;">Text shown above videos</span></div>
+          <div class="editor-section-body"><div id="content-blocks-list"></div><button class="add-item-btn" onclick="addContentBlock()">+ Add Content Section</button></div>
         </div>
-
         <div class="editor-section">
-          <div class="editor-section-header">
-            <span class="editor-section-title">Videos</span>
-            <span style="font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic;">Drag to reorder</span>
-          </div>
-          <div class="editor-section-body">
-            <div id="videos-list"></div>
-            <button class="add-item-btn" onclick="addVideo()">+ Add Video</button>
-          </div>
+          <div class="editor-section-header"><span class="editor-section-title">Videos</span><span style="font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic;">Drag to reorder</span></div>
+          <div class="editor-section-body"><div id="videos-list"></div><button class="add-item-btn" onclick="addVideo()">+ Add Video</button></div>
         </div>
-
         <div class="editor-section">
-          <div class="editor-section-header">
-            <span class="editor-section-title">Quiz Questions</span>
-            <span style="font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic;">Select the correct answer with the radio button</span>
-          </div>
-          <div class="editor-section-body">
-            <div id="questions-list"></div>
-            <button class="add-item-btn" onclick="addQuestion()">+ Add Question</button>
-          </div>
+          <div class="editor-section-header"><span class="editor-section-title">Quiz Questions</span><span style="font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic;">Radio button = correct answer</span></div>
+          <div class="editor-section-body"><div id="questions-list"></div><button class="add-item-btn" onclick="addQuestion()">+ Add Question</button></div>
         </div>
-
         <div class="save-bar">
           <span class="save-status" id="save-status"></span>
           <button class="btn btn-ghost" onclick="loadModuleContent(currentModuleId)">Discard</button>
           <button class="btn btn-primary btn-lg" onclick="saveAll()">Save All Changes</button>
         </div>`;
-
       renderContentBlocks();
       renderVideos();
       renderQuestions();
@@ -457,179 +367,208 @@
 
     // ── Content blocks ────────────────────────────────────────────────────────
     function renderContentBlocks() {
-      const list = document.getElementById("content-blocks-list");
-      if (!list) return;
-      list.innerHTML = "";
-      if (!contentBlocksData.length) {
-        list.innerHTML = `<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No content sections yet. Add one below.</p>`;
+      const list=document.getElementById("content-blocks-list");
+      if(!list)return;
+      list.innerHTML="";
+      if(!contentBlocksData.length){
+        list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No content yet. Add a section below.</p>`;
         return;
       }
-      contentBlocksData.forEach((block, idx) => {
-        const div = document.createElement("div");
-        div.className = "item-card"; div.draggable = true; div.dataset.idx = idx; div.dataset.type = "content";
-        div.innerHTML = `
-          <div class="drag-handle">⠿</div>
-          <div class="item-fields">
-            <textarea placeholder="Write your content here..." rows="4"
-              oninput="contentBlocksData[${idx}].text=this.value"
-            >${esc(block.text||"")}</textarea>
-          </div>
-          <button class="delete-btn" onclick="deleteContentBlock(${idx})">✕</button>`;
-        addDrag(div, "content");
+      contentBlocksData.forEach((block,idx)=>{
+        const div=document.createElement("div");
+        div.className="item-card"; div.draggable=true; div.dataset.idx=idx; div.dataset.type="content";
+        const ta=document.createElement("textarea");
+        ta.placeholder="Write your content here...";
+        ta.rows=4;
+        ta.style.cssText="background:var(--surface);border:1px solid var(--gold-border);border-radius:var(--radius);padding:10px;color:var(--text);font-family:var(--font);font-size:14px;width:100%;resize:vertical;";
+        ta.value=block.text||"";
+        ta.addEventListener("input",()=>{ contentBlocksData[idx].text=ta.value; });
+        const fields=document.createElement("div"); fields.className="item-fields"; fields.appendChild(ta);
+        const delBtn=document.createElement("button"); delBtn.className="delete-btn"; delBtn.textContent="✕"; delBtn.onclick=()=>deleteContentBlock(idx);
+        div.appendChild(document.createElement("div")); div.children[0].className="drag-handle"; div.children[0].textContent="⠿";
+        div.appendChild(fields);
+        div.appendChild(delBtn);
+        addDrag(div,"content");
         list.appendChild(div);
       });
     }
 
-    window.addContentBlock = () => { contentBlocksData.push({tempId:`b${Date.now()}`,text:""}); renderContentBlocks(); const tas=document.querySelectorAll("#content-blocks-list textarea"); if(tas.length) tas[tas.length-1].focus(); };
-    window.deleteContentBlock = (idx) => { if(confirm("Delete this section?")){ contentBlocksData.splice(idx,1); renderContentBlocks(); } };
+    window.addContentBlock=()=>{ contentBlocksData.push({tempId:`b${Date.now()}`,text:""}); renderContentBlocks(); const tas=document.querySelectorAll("#content-blocks-list textarea"); if(tas.length)tas[tas.length-1].focus(); };
+    window.deleteContentBlock=(idx)=>{ if(confirm("Delete this section?")){ contentBlocksData.splice(idx,1); renderContentBlocks(); } };
 
     // ── Videos ────────────────────────────────────────────────────────────────
     function renderVideos() {
-      const list = document.getElementById("videos-list");
-      if (!list) return;
-      list.innerHTML = "";
-      if (!videosData.length) {
-        list.innerHTML = `<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No videos yet. Add one below.</p>`;
+      const list=document.getElementById("videos-list");
+      if(!list)return;
+      list.innerHTML="";
+      if(!videosData.length){
+        list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No videos yet. Add one below.</p>`;
         return;
       }
-      videosData.forEach((vid, idx) => {
-        const ytId = vid.youtubeId||"";
-        const div = document.createElement("div");
-        div.className = "item-card"; div.draggable = true; div.dataset.idx = idx; div.dataset.type = "video";
-        div.innerHTML = `
-          <div class="drag-handle">⠿</div>
-          <div class="item-fields">
-            <input type="text" placeholder="Video title" value="${esc(vid.title||"")}"
-              oninput="videosData[${idx}].title=this.value"/>
-            <input type="text" placeholder="YouTube URL or video ID"
-              value="${esc(ytId)}"
-              oninput="handleYT(this,${idx})"/>
-            ${ytId?`<div class="youtube-preview"><iframe src="https://www.youtube.com/embed/${ytId}?rel=0" allowfullscreen></iframe></div>`:""}
-          </div>
-          <button class="delete-btn" onclick="deleteVideo(${idx})">✕</button>`;
-        addDrag(div, "video");
+      videosData.forEach((vid,idx)=>{
+        const ytId=vid.youtubeId||"";
+        const div=document.createElement("div");
+        div.className="item-card"; div.draggable=true; div.dataset.idx=idx; div.dataset.type="video";
+
+        const handle=document.createElement("div"); handle.className="drag-handle"; handle.textContent="⠿";
+
+        const fields=document.createElement("div"); fields.className="item-fields";
+
+        const titleIn=document.createElement("input"); titleIn.type="text"; titleIn.placeholder="Video title"; titleIn.value=vid.title||"";
+        titleIn.style.cssText="background:var(--surface);border:1px solid var(--gold-border);border-radius:var(--radius);padding:10px;color:var(--text);font-family:var(--font);font-size:14px;";
+        titleIn.addEventListener("input",()=>{ videosData[idx].title=titleIn.value; });
+
+        const urlIn=document.createElement("input"); urlIn.type="text"; urlIn.placeholder="YouTube URL or video ID"; urlIn.value=ytId;
+        urlIn.style.cssText="background:var(--surface);border:1px solid var(--gold-border);border-radius:var(--radius);padding:10px;color:var(--text);font-family:var(--font);font-size:14px;";
+        urlIn.addEventListener("input",()=>{
+          let val=urlIn.value.trim();
+          const match=val.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
+          if(match)val=match[1];
+          videosData[idx].youtubeId=val;
+          let preview=fields.querySelector(".youtube-preview");
+          if(val.length>=11){
+            if(!preview){preview=document.createElement("div");preview.className="youtube-preview";fields.appendChild(preview);}
+            preview.innerHTML=`<iframe src="https://www.youtube.com/embed/${val}?rel=0" allowfullscreen></iframe>`;
+          } else if(preview){preview.innerHTML="";}
+        });
+
+        fields.appendChild(titleIn);
+        fields.appendChild(urlIn);
+        if(ytId){
+          const preview=document.createElement("div"); preview.className="youtube-preview";
+          preview.innerHTML=`<iframe src="https://www.youtube.com/embed/${ytId}?rel=0" allowfullscreen></iframe>`;
+          fields.appendChild(preview);
+        }
+
+        const delBtn=document.createElement("button"); delBtn.className="delete-btn"; delBtn.textContent="✕"; delBtn.onclick=()=>deleteVideo(idx);
+        div.appendChild(handle); div.appendChild(fields); div.appendChild(delBtn);
+        addDrag(div,"video");
         list.appendChild(div);
       });
     }
 
-    window.handleYT = function(input, idx) {
-      let val = input.value.trim();
-      const match = val.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
-      if (match) val = match[1];
-      videosData[idx].youtubeId = val;
-      const card = input.closest(".item-card");
-      let preview = card.querySelector(".youtube-preview");
-      if (val.length >= 11) {
-        if (!preview) { preview = document.createElement("div"); preview.className="youtube-preview"; card.querySelector(".item-fields").appendChild(preview); }
-        preview.innerHTML = `<iframe src="https://www.youtube.com/embed/${val}?rel=0" allowfullscreen></iframe>`;
-      } else if (preview) { preview.innerHTML=""; }
-    };
-
-    window.addVideo = () => { videosData.push({tempId:`v${Date.now()}`,title:"",youtubeId:"",order:videosData.length+1}); renderVideos(); };
-    window.deleteVideo = (idx) => { if(confirm("Delete this video?")){ videosData.splice(idx,1); renderVideos(); } };
+    window.addVideo=()=>{ videosData.push({tempId:`v${Date.now()}`,title:"",youtubeId:"",order:videosData.length+1}); renderVideos(); };
+    window.deleteVideo=(idx)=>{ if(confirm("Delete this video?")){ videosData.splice(idx,1); renderVideos(); } };
 
     // ── Questions ─────────────────────────────────────────────────────────────
     function renderQuestions() {
-      const list = document.getElementById("questions-list");
-      if (!list) return;
-      list.innerHTML = "";
-      if (!questionsData.length) {
-        list.innerHTML = `<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No questions yet. Add one below.</p>`;
+      const list=document.getElementById("questions-list");
+      if(!list)return;
+      list.innerHTML="";
+      if(!questionsData.length){
+        list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No questions yet. Add one below.</p>`;
         return;
       }
-      questionsData.forEach((q, idx) => {
-        const options = [...(q.options||["","","",""])];
-        while (options.length < 4) options.push("");
-        const div = document.createElement("div");
-        div.className = "item-card"; div.draggable = true; div.dataset.idx = idx; div.dataset.type = "question";
-        div.style.flexDirection = "column";
-        div.innerHTML = `
-          <div style="display:flex;gap:8px;align-items:flex-start;width:100%;">
-            <div class="drag-handle">⠿</div>
-            <div class="item-fields" style="flex:1;">
-              <input type="text" placeholder="Question ${idx+1}" value="${esc(q.question||"")}"
-                oninput="questionsData[${idx}].question=this.value"/>
-              <div style="margin-top:6px;">
-                <label style="margin-bottom:6px;display:block;">Answer options — click the circle to mark correct</label>
-                ${options.map((opt,oi)=>`
-                  <div class="option-row" style="margin-bottom:6px;">
-                    <input type="radio" name="correct_${idx}" class="correct-radio"
-                      title="Mark as correct answer"
-                      ${(q.correctIndex||0)===oi?"checked":""}
-                      onchange="questionsData[${idx}].correctIndex=${oi}"/>
-                    <span style="font-family:var(--cinzel);font-size:10px;color:var(--text3);width:18px;flex-shrink:0;">${String.fromCharCode(65+oi)}</span>
-                    <input type="text" placeholder="Option ${String.fromCharCode(65+oi)}" value="${esc(opt)}"
-                      oninput="questionsData[${idx}].options[${oi}]=this.value"/>
-                  </div>`).join("")}
-              </div>
-            </div>
-            <button class="delete-btn" onclick="deleteQuestion(${idx})">✕</button>
-          </div>`;
-        addDrag(div, "question");
+      questionsData.forEach((q,idx)=>{
+        const options=[...(q.options||["","","",""])];
+        while(options.length<4)options.push("");
+
+        const div=document.createElement("div");
+        div.className="item-card"; div.draggable=true; div.dataset.idx=idx; div.dataset.type="question";
+        div.style.flexDirection="column";
+
+        const inner=document.createElement("div");
+        inner.style.cssText="display:flex;gap:8px;align-items:flex-start;width:100%;";
+
+        const handle=document.createElement("div"); handle.className="drag-handle"; handle.textContent="⠿";
+
+        const fields=document.createElement("div"); fields.className="item-fields"; fields.style.flex="1";
+
+        const qIn=document.createElement("input"); qIn.type="text"; qIn.placeholder=`Question ${idx+1}`;
+        qIn.value=q.question||"";
+        qIn.style.cssText="background:var(--surface);border:1px solid var(--gold-border);border-radius:var(--radius);padding:10px;color:var(--text);font-family:var(--font);font-size:14px;width:100%;";
+        qIn.addEventListener("input",()=>{ questionsData[idx].question=qIn.value; });
+        fields.appendChild(qIn);
+
+        const optLabel=document.createElement("label"); optLabel.textContent="Answer options — radio = correct";
+        optLabel.style.cssText="margin-top:8px;margin-bottom:4px;display:block;";
+        fields.appendChild(optLabel);
+
+        options.forEach((opt,oi)=>{
+          const row=document.createElement("div"); row.className="option-row";
+          const radio=document.createElement("input"); radio.type="radio"; radio.name=`correct_${idx}`; radio.className="correct-radio";
+          radio.checked=(q.correctIndex||0)===oi;
+          radio.addEventListener("change",()=>{ questionsData[idx].correctIndex=oi; });
+          const letter=document.createElement("span");
+          letter.textContent=String.fromCharCode(65+oi);
+          letter.style.cssText="font-family:var(--cinzel);font-size:10px;color:var(--text3);width:18px;flex-shrink:0;";
+          const optIn=document.createElement("input"); optIn.type="text"; optIn.placeholder=`Option ${String.fromCharCode(65+oi)}`;
+          optIn.value=opt;
+          optIn.style.cssText="background:var(--surface);border:1px solid var(--gold-border);border-radius:var(--radius);padding:8px 10px;color:var(--text);font-family:var(--font);font-size:13px;flex:1;";
+          optIn.addEventListener("input",()=>{ questionsData[idx].options[oi]=optIn.value; });
+          row.appendChild(radio); row.appendChild(letter); row.appendChild(optIn);
+          fields.appendChild(row);
+        });
+
+        const delBtn=document.createElement("button"); delBtn.className="delete-btn"; delBtn.textContent="✕"; delBtn.onclick=()=>deleteQuestion(idx);
+        inner.appendChild(handle); inner.appendChild(fields); inner.appendChild(delBtn);
+        div.appendChild(inner);
+        addDrag(div,"question");
         list.appendChild(div);
       });
     }
 
-    window.addQuestion = () => { questionsData.push({tempId:`q${Date.now()}`,question:"",options:["","","",""],correctIndex:0,order:questionsData.length+1}); renderQuestions(); };
-    window.deleteQuestion = (idx) => { if(confirm("Delete this question?")){ questionsData.splice(idx,1); renderQuestions(); } };
+    window.addQuestion=()=>{ questionsData.push({tempId:`q${Date.now()}`,question:"",options:["","","",""],correctIndex:0,order:questionsData.length+1}); renderQuestions(); };
+    window.deleteQuestion=(idx)=>{ if(confirm("Delete this question?")){ questionsData.splice(idx,1); renderQuestions(); } };
 
-    // ── Drag reorder ──────────────────────────────────────────────────────────
-    function addDrag(el, type) {
-      el.addEventListener("dragstart", e => { dragSrc=el; el.classList.add("dragging"); e.dataTransfer.effectAllowed="move"; });
-      el.addEventListener("dragend", () => { el.classList.remove("dragging"); dragSrc=null; });
-      el.addEventListener("dragover", e => { e.preventDefault(); });
-      el.addEventListener("drop", e => {
+    // ── Drag ──────────────────────────────────────────────────────────────────
+    function addDrag(el,type) {
+      el.addEventListener("dragstart",e=>{ dragSrc=el; el.classList.add("dragging"); e.dataTransfer.effectAllowed="move"; });
+      el.addEventListener("dragend",()=>{ el.classList.remove("dragging"); dragSrc=null; });
+      el.addEventListener("dragover",e=>{ e.preventDefault(); });
+      el.addEventListener("drop",e=>{
         e.preventDefault();
-        if (!dragSrc || dragSrc===el) return;
-        const from=parseInt(dragSrc.dataset.idx), to=parseInt(el.dataset.idx);
-        if (type==="content") { const i=contentBlocksData.splice(from,1)[0]; contentBlocksData.splice(to,0,i); renderContentBlocks(); }
-        else if (type==="video") { const i=videosData.splice(from,1)[0]; videosData.splice(to,0,i); renderVideos(); }
-        else if (type==="question") { const i=questionsData.splice(from,1)[0]; questionsData.splice(to,0,i); renderQuestions(); }
+        if(!dragSrc||dragSrc===el)return;
+        const from=parseInt(dragSrc.dataset.idx),to=parseInt(el.dataset.idx);
+        if(type==="content"){const i=contentBlocksData.splice(from,1)[0];contentBlocksData.splice(to,0,i);renderContentBlocks();}
+        else if(type==="video"){const i=videosData.splice(from,1)[0];videosData.splice(to,0,i);renderVideos();}
+        else if(type==="question"){const i=questionsData.splice(from,1)[0];questionsData.splice(to,0,i);renderQuestions();}
       });
     }
 
     // ── Save ──────────────────────────────────────────────────────────────────
     window.saveAll = async function() {
-      const btn = document.querySelector(".save-bar .btn-primary");
-      const status = document.getElementById("save-status");
-      btn.textContent = "Saving..."; btn.disabled = true;
+      const btn=document.querySelector(".save-bar .btn-primary");
+      const status=document.getElementById("save-status");
+      btn.textContent="Saving..."; btn.disabled=true;
       try {
-        const title = document.getElementById("mod-title").value.trim();
-        const description = document.getElementById("mod-desc").value.trim();
-        const passingScore = parseInt(document.getElementById("mod-passing").value)||4;
-        const totalQuestions = parseInt(document.getElementById("mod-total").value)||5;
-        const content = contentBlocksData.map(b=>b.text).join("\n\n");
+        const title=document.getElementById("mod-title").value.trim();
+        const description=document.getElementById("mod-desc").value.trim();
+        const passingScore=parseInt(document.getElementById("mod-passing").value)||4;
+        const totalQuestions=parseInt(document.getElementById("mod-total").value)||5;
+        const content=contentBlocksData.map(b=>b.text).join("\n\n");
 
-        await setDoc(doc(db,"modules",currentModuleId), {
-          id:currentModuleId, order:parseInt(currentModuleId.split("_")[1]),
-          title, description, content, passingScore, totalQuestions
+        await setDoc(doc(db,"modules",currentModuleId),{
+          id:currentModuleId,order:parseInt(currentModuleId.split("_")[1]),
+          title,description,content,passingScore,totalQuestions
         });
 
-        const oldVids = await getDocs(collection(db,"modules",currentModuleId,"videos"));
+        const oldVids=await getDocs(collection(db,"modules",currentModuleId,"videos"));
         await Promise.all(oldVids.docs.map(d=>deleteDoc(d.ref)));
-        await Promise.all(videosData.map((v,i) => {
-          const id = v.id||`video_${i+1}`;
-          return setDoc(doc(db,"modules",currentModuleId,"videos",id), {id,order:i+1,title:v.title||"",youtubeId:v.youtubeId||""});
+        await Promise.all(videosData.map((v,i)=>{
+          const id=v.id||`video_${i+1}`;
+          return setDoc(doc(db,"modules",currentModuleId,"videos",id),{id,order:i+1,title:v.title||"",youtubeId:v.youtubeId||""});
         }));
 
-        const oldQues = await getDocs(collection(db,"modules",currentModuleId,"questions"));
+        const oldQues=await getDocs(collection(db,"modules",currentModuleId,"questions"));
         await Promise.all(oldQues.docs.map(d=>deleteDoc(d.ref)));
-        await Promise.all(questionsData.map((q,i) => {
-          const id = q.id||`q${i+1}`;
-          return setDoc(doc(db,"modules",currentModuleId,"questions",id), {order:i+1,question:q.question||"",options:q.options||["","","",""],correctIndex:q.correctIndex||0});
+        await Promise.all(questionsData.map((q,i)=>{
+          const id=q.id||`q${i+1}`;
+          return setDoc(doc(db,"modules",currentModuleId,"questions",id),{order:i+1,question:q.question||"",options:q.options||["","","",""],correctIndex:q.correctIndex||0});
         }));
 
-        status.textContent = "✓ Saved"; status.className = "save-status saved";
-        showToast("Module saved.","success");
+        status.textContent="✓ Saved"; status.className="save-status saved";
+        showToast("Module saved successfully.","success");
         setTimeout(()=>{status.textContent="";},3000);
       } catch(e) {
+        console.error("Save error:",e);
         showToast("Save failed: "+e.message,"error");
       } finally {
-        btn.textContent = "Save All Changes"; btn.disabled = false;
+        btn.textContent="Save All Changes"; btn.disabled=false;
       }
     };
 
-    function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+    function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
   </script>
 </body>
 </html>
