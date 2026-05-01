@@ -6,18 +6,56 @@
   <title>Belladonna Training — Admin</title>
   <link rel="stylesheet" href="style.css"/>
   <style>
-    .trainee-row { background: var(--surface); border-bottom: 1px solid var(--border); }
-    .trainee-header { padding: 1rem 1.5rem; display: flex; align-items: center; gap: 1rem; cursor: pointer; transition: background 0.15s; }
-    .trainee-header:hover { background: var(--surface-2); }
-    .trainee-header.expanded { background: var(--brand-bg); }
-    .trainee-detail { padding: 1rem 1.5rem 1.25rem; background: var(--surface-2); border-top: 1px solid var(--border); display: none; }
-    .trainee-detail.open { display: block; }
-    .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
-    .detail-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; }
-    .detail-card-label { font-size: 12px; color: var(--ink-3); font-weight: 500; margin-bottom: 8px; }
-    .quiz-line { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; }
-    .chevron { font-size: 12px; color: var(--ink-3); transition: transform 0.18s; flex-shrink: 0; }
-    .chevron.open { transform: rotate(180deg); }
+    .tabs { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:2rem; }
+    .tab { padding:12px 24px; font-size:14px; font-weight:500; cursor:pointer; border:none; background:transparent; color:var(--ink-3); border-bottom:2px solid transparent; margin-bottom:-1px; font-family:var(--font-body); transition:all 0.15s; }
+    .tab.active { color:var(--brand); border-bottom-color:var(--brand); }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+
+    /* Trainee styles */
+    .trainee-row { background:var(--surface); border-bottom:1px solid var(--border); }
+    .trainee-header { padding:1rem 1.5rem; display:flex; align-items:center; gap:1rem; cursor:pointer; transition:background 0.15s; }
+    .trainee-header:hover { background:var(--surface-2); }
+    .trainee-header.expanded { background:var(--brand-bg); }
+    .trainee-detail { padding:1rem 1.5rem 1.25rem; background:var(--surface-2); border-top:1px solid var(--border); display:none; }
+    .trainee-detail.open { display:block; }
+    .detail-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; }
+    .detail-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:1rem; }
+    .detail-card-label { font-size:12px; color:var(--ink-3); font-weight:500; margin-bottom:8px; }
+    .quiz-line { display:flex; justify-content:space-between; font-size:12px; padding:3px 0; }
+    .chevron { font-size:12px; color:var(--ink-3); transition:transform 0.18s; flex-shrink:0; }
+    .chevron.open { transform:rotate(180deg); }
+
+    /* Content editor styles */
+    .module-nav { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:1.5rem; }
+    .mod-tab { padding:7px 16px; border-radius:20px; font-size:13px; font-family:var(--font-body); cursor:pointer; border:1px solid var(--border-2); background:var(--surface); color:var(--ink-2); transition:all 0.15s; }
+    .mod-tab.active { background:var(--brand); color:white; border-color:var(--brand); }
+    .editor-section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:1rem; overflow:hidden; }
+    .editor-section-header { padding:12px 16px; background:var(--surface-2); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+    .editor-section-title { font-size:14px; font-weight:500; color:var(--ink); }
+    .editor-section-body { padding:1rem; }
+    .field-row { display:flex; gap:8px; align-items:flex-start; margin-bottom:8px; }
+    .field-row input, .field-row textarea, .field-row select { flex:1; }
+    .field-row textarea { min-height:80px; resize:vertical; }
+    .drag-handle { cursor:grab; color:var(--ink-3); padding:8px 4px; font-size:16px; flex-shrink:0; user-select:none; }
+    .drag-handle:active { cursor:grabbing; }
+    .item-card { background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; margin-bottom:8px; display:flex; gap:8px; align-items:flex-start; }
+    .item-card.dragging { opacity:0.4; }
+    .item-fields { flex:1; display:flex; flex-direction:column; gap:6px; }
+    .option-row { display:flex; gap:6px; align-items:center; }
+    .option-row input { flex:1; }
+    .correct-radio { width:16px; height:16px; accent-color:var(--brand); flex-shrink:0; cursor:pointer; }
+    .correct-label { font-size:12px; color:var(--ink-3); white-space:nowrap; }
+    .add-btn { display:flex; align-items:center; gap:6px; padding:7px 14px; font-size:13px; color:var(--brand); border:1px dashed var(--brand-light); background:var(--brand-bg); border-radius:var(--radius-sm); cursor:pointer; font-family:var(--font-body); transition:all 0.15s; width:100%; justify-content:center; margin-top:4px; }
+    .add-btn:hover { background:var(--brand-light); }
+    .save-bar { position:sticky; bottom:0; background:var(--surface); border-top:1px solid var(--border); padding:1rem 0; margin-top:1rem; display:flex; justify-content:flex-end; gap:10px; align-items:center; }
+    .save-status { font-size:13px; color:var(--ink-3); }
+    .save-status.saved { color:var(--success); }
+    .delete-btn { background:none; border:none; cursor:pointer; color:var(--ink-3); font-size:16px; padding:4px; flex-shrink:0; transition:color 0.15s; }
+    .delete-btn:hover { color:var(--danger); }
+    .youtube-preview { margin-top:6px; }
+    .youtube-preview iframe { width:100%; aspect-ratio:16/9; border-radius:var(--radius-sm); border:none; }
+    .content-block-type { font-size:11px; padding:2px 8px; border-radius:4px; background:var(--surface-3); color:var(--ink-3); }
   </style>
 </head>
 <body>
@@ -29,32 +67,37 @@
   <main id="main" style="display:none;">
     <div class="page-wrap-wide">
 
-      <!-- Header -->
-      <div class="fade-up" style="margin-bottom:2rem;">
+      <div class="fade-up" style="margin-bottom:1.5rem;">
         <p class="text-brand" style="font-size:13px;font-weight:500;margin-bottom:4px;">Admin</p>
-        <h1>Host training overview</h1>
-        <p id="admin-sub" style="margin-top:0.5rem;color:var(--ink-3);">Loading…</p>
+        <h1>Training portal management</h1>
       </div>
 
-      <!-- Stats -->
-      <div id="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:2rem;"></div>
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('trainees')">Trainees</button>
+        <button class="tab" onclick="switchTab('content')">Module content</button>
+      </div>
 
-      <!-- Trainee table -->
-      <div class="card fade-up" style="padding:0;overflow:hidden;animation-delay:0.1s;">
-        <div style="padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);">
-          <h3>All trainees</h3>
+      <!-- TRAINEES TAB -->
+      <div class="tab-panel active" id="tab-trainees">
+        <div id="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:2rem;"></div>
+        <div class="card fade-up" style="padding:0;overflow:hidden;">
+          <div style="padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);"><h3>All trainees</h3></div>
+          <div id="trainee-list"></div>
         </div>
-        <div id="trainee-list"></div>
+        <div class="card fade-up" style="margin-top:1.5rem;border-left:3px solid var(--brand);">
+          <h3 style="margin-bottom:0.75rem;">Adding a new trainee</h3>
+          <ol style="padding-left:1.2rem;display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--ink-2);">
+            <li>Create their account in <strong>Firebase Auth</strong> (Email/Password).</li>
+            <li>Add a doc in Firestore: <code style="background:var(--surface-3);padding:1px 5px;border-radius:4px;font-size:13px;">users/{uid}</code> with <code style="background:var(--surface-3);padding:1px 5px;border-radius:4px;font-size:13px;">name, email, role: "trainee"</code>.</li>
+            <li>They can log in immediately and start Module 1.</li>
+          </ol>
+        </div>
       </div>
 
-      <!-- Add trainee instructions -->
-      <div class="card fade-up" style="margin-top:1.5rem;border-left:3px solid var(--brand);animation-delay:0.2s;">
-        <h3 style="margin-bottom:0.75rem;">Adding a new trainee</h3>
-        <ol style="padding-left:1.2rem;display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--ink-2);">
-          <li>Create their account in <strong>Firebase Auth</strong> (Email/Password).</li>
-          <li>Add a doc in Firestore: <code style="background:var(--surface-3);padding:1px 5px;border-radius:4px;font-size:13px;">users/{uid}</code> with <code style="background:var(--surface-3);padding:1px 5px;border-radius:4px;font-size:13px;">name, email, role: "trainee"</code>.</li>
-          <li>They can log in immediately and start Module 1.</li>
-        </ol>
+      <!-- CONTENT TAB -->
+      <div class="tab-panel" id="tab-content">
+        <div class="module-nav" id="module-nav"></div>
+        <div id="module-editor"></div>
       </div>
 
     </div>
@@ -63,112 +106,107 @@
   <div class="toast-wrap" id="toast-wrap"></div>
 
   <script type="module">
-    import { requireAdmin, renderNav, loadModules, doLogout, db, showToast, adminSignOffFn, revokeSignOffFn } from "./firebase-init.js";
-    import { collection, getDocs, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { requireAdmin, renderNav, doLogout, db, showToast, adminSignOffFn, revokeSignOffFn } from "./firebase-init.js";
+    import { collection, getDocs, doc, getDoc, setDoc, addDoc, deleteDoc, updateDoc, serverTimestamp, query, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     window._logout = doLogout;
 
     const MODULES_COUNT = 6;
     const SIGNOFF_STEPS = [
-      { key: "dryRunComplete", label: "Dry run", dateKey: "dryRunDate" },
-      { key: "shadowGigComplete", label: "Shadow gig", dateKey: "shadowGigDate" },
-      { key: "soloLaunchComplete", label: "Solo launch", dateKey: "soloLaunchDate" },
+      { key:"dryRunComplete", label:"Dry run", dateKey:"dryRunDate" },
+      { key:"shadowGigComplete", label:"Shadow gig", dateKey:"shadowGigDate" },
+      { key:"soloLaunchComplete", label:"Solo launch", dateKey:"soloLaunchDate" },
+    ];
+
+    const MODULE_DEFS = [
+      { id:"module_1", num:1, label:"Module 1" },
+      { id:"module_2", num:2, label:"Module 2" },
+      { id:"module_3", num:3, label:"Module 3" },
+      { id:"module_4", num:4, label:"Module 4" },
+      { id:"module_5", num:5, label:"Module 5" },
+      { id:"module_6", num:6, label:"Module 6" },
     ];
 
     let allTrainees = [], certMap = {}, progressMap = {}, adminUid = "";
+    let currentModuleId = "module_1";
+    let moduleData = {}, videosData = [], contentBlocksData = [], questionsData = [];
+    let dragSrc = null;
 
-    function countPassed(prog) {
-      return Object.values(prog || {}).filter(p => p.status === "passed").length;
-    }
+    // ── Tab switching ──────────────────────────────────────────────────────────
+    window.switchTab = function(tab) {
+      document.querySelectorAll(".tab").forEach((t,i) => t.classList.toggle("active", ["trainees","content"][i] === tab));
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      document.getElementById(`tab-${tab}`).classList.add("active");
+      if (tab === "content" && !document.getElementById("module-nav").innerHTML) {
+        buildModuleNav();
+        loadModuleContent("module_1");
+      }
+    };
 
+    // ── Auth + initial load ────────────────────────────────────────────────────
     requireAdmin(async (user, profile) => {
       adminUid = user.uid;
       document.getElementById("nav-placeholder").innerHTML = renderNav(profile, true);
+      await loadTrainees();
+      document.getElementById("loading").style.display = "none";
+      document.getElementById("main").style.display = "block";
+    });
 
-      // Load all data
+    // ── TRAINEES ──────────────────────────────────────────────────────────────
+    async function loadTrainees() {
       const [usersSnap, certsSnap] = await Promise.all([
         getDocs(collection(db, "users")),
         getDocs(collection(db, "certifications")),
       ]);
-
-      allTrainees = usersSnap.docs
-        .map(d => ({ id: d.id, ...d.data() }))
-        .filter(u => u.role !== "admin");
-
+      allTrainees = usersSnap.docs.map(d => ({id:d.id,...d.data()})).filter(u => u.role !== "admin");
       certsSnap.forEach(d => { certMap[d.id] = d.data(); });
-
       await Promise.all(allTrainees.map(async u => {
         const snap = await getDocs(collection(db, "users", u.id, "progress"));
         const p = {};
         snap.forEach(d => { p[d.id] = d.data(); });
         progressMap[u.id] = p;
       }));
-
-      // Stats
-      const certified = allTrainees.filter(t => t.certified).length;
-      const inProgress = allTrainees.filter(t => !t.certified && countPassed(progressMap[t.id]) > 0).length;
-      const quizDone = allTrainees.filter(t => !t.certified && countPassed(progressMap[t.id]) >= MODULES_COUNT).length;
-
-      document.getElementById("admin-sub").textContent =
-        `${allTrainees.length} trainees · ${certified} certified`;
-
-      const stats = [
-        { label: "Total trainees", value: allTrainees.length },
-        { label: "Certified", value: certified },
-        { label: "In progress", value: inProgress },
-        { label: "Quizzes complete", value: quizDone },
-      ];
-      const sg = document.getElementById("stats-grid");
-      stats.forEach(s => {
-        sg.innerHTML += `
-          <div class="stat-card">
-            <div class="stat-label">${s.label}</div>
-            <div class="stat-num">${s.value}</div>
-          </div>`;
-      });
-
+      renderStats();
       renderTrainees();
+    }
 
-      document.getElementById("loading").style.display = "none";
-      document.getElementById("main").style.display = "block";
-    });
+    function countPassed(prog) { return Object.values(prog||{}).filter(p=>p.status==="passed").length; }
+
+    function renderStats() {
+      const certified = allTrainees.filter(t=>t.certified).length;
+      const inProgress = allTrainees.filter(t=>!t.certified&&countPassed(progressMap[t.id])>0).length;
+      const quizDone = allTrainees.filter(t=>!t.certified&&countPassed(progressMap[t.id])>=MODULES_COUNT).length;
+      const sg = document.getElementById("stats-grid");
+      sg.innerHTML = [
+        {label:"Total trainees",value:allTrainees.length},
+        {label:"Certified",value:certified},
+        {label:"In progress",value:inProgress},
+        {label:"Quizzes complete",value:quizDone},
+      ].map(s=>`<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-num">${s.value}</div></div>`).join("");
+    }
 
     function renderTrainees() {
       const list = document.getElementById("trainee-list");
       list.innerHTML = "";
-
       if (!allTrainees.length) {
         list.innerHTML = `<div style="padding:2rem;text-align:center;color:var(--ink-3);">No trainees yet.</div>`;
         return;
       }
-
-      const sorted = [...allTrainees].sort((a,b) =>
-        countPassed(progressMap[b.id]) - countPassed(progressMap[a.id]));
-
+      const sorted = [...allTrainees].sort((a,b)=>countPassed(progressMap[b.id])-countPassed(progressMap[a.id]));
       sorted.forEach(trainee => {
         const passed = countPassed(progressMap[trainee.id]);
-        const pct = Math.round((passed / MODULES_COUNT) * 100);
-        const cert = certMap[trainee.id] || {};
-        const initials = trainee.name?.split(" ").map(n=>n[0]).join("").toUpperCase().slice(0,2) || "?";
-
-        const dots = SIGNOFF_STEPS.map(s =>
-          `<div title="${s.label}" style="width:10px;height:10px;border-radius:50%;background:${cert[s.key] ? "var(--success)" : "var(--surface-3)"};border:1px solid ${cert[s.key] ? "var(--success)" : "var(--border-2)"};"></div>`
-        ).join("");
-
+        const pct = Math.round((passed/MODULES_COUNT)*100);
+        const cert = certMap[trainee.id]||{};
+        const initials = trainee.name?.split(" ").map(n=>n[0]).join("").toUpperCase().slice(0,2)||"?";
+        const dots = SIGNOFF_STEPS.map(s=>`<div title="${s.label}" style="width:10px;height:10px;border-radius:50%;background:${cert[s.key]?"var(--success)":"var(--surface-3)"};border:1px solid ${cert[s.key]?"var(--success)":"var(--border-2)"};"></div>`).join("");
         const row = document.createElement("div");
         row.className = "trainee-row";
         row.id = `row-${trainee.id}`;
-
         row.innerHTML = `
           <div class="trainee-header" onclick="toggleTrainee('${trainee.id}')">
-            <div class="avatar" style="width:38px;height:38px;font-size:13px;background:${trainee.certified ? "var(--success-bg)" : "var(--surface-3)"};color:${trainee.certified ? "var(--success)" : "var(--ink-3)"};">
-              ${trainee.certified ? "✓" : initials}
-            </div>
+            <div class="avatar" style="width:38px;height:38px;font-size:13px;background:${trainee.certified?"var(--success-bg)":"var(--surface-3)"};color:${trainee.certified?"var(--success)":"var(--ink-3)"};">${trainee.certified?"✓":initials}</div>
             <div style="flex:1;min-width:0;">
-              <div style="font-size:15px;font-weight:500;">
-                ${trainee.name}
-                ${trainee.certified ? `<span class="badge badge-pass" style="margin-left:8px;font-size:11px;">Certified</span>` : ""}
-              </div>
+              <div style="font-size:15px;font-weight:500;">${trainee.name}${trainee.certified?`<span class="badge badge-pass" style="margin-left:8px;font-size:11px;">Certified</span>`:""}</div>
               <div class="text-muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${trainee.email}</div>
             </div>
             <div style="width:130px;flex-shrink:0;">
@@ -178,109 +216,450 @@
             <div style="display:flex;gap:4px;flex-shrink:0;padding:0 8px;">${dots}</div>
             <div class="chevron" id="chev-${trainee.id}">▾</div>
           </div>
-          <div class="trainee-detail" id="detail-${trainee.id}">
-            ${buildDetail(trainee, cert)}
-          </div>`;
-
+          <div class="trainee-detail" id="detail-${trainee.id}">${buildDetail(trainee,cert)}</div>`;
         list.appendChild(row);
       });
     }
 
     function buildDetail(trainee, cert) {
-      // Quiz scores card
       let quizRows = "";
-      for (let i = 1; i <= MODULES_COUNT; i++) {
-        const mId = `module_${i}`;
-        const mp = progressMap[trainee.id]?.[mId];
-        let scoreText = "Not started";
-        let color = "var(--ink-3)";
-        if (mp?.status === "passed") { scoreText = `✓ ${mp.quizScore}/${mp.totalQuestions || 5}`; color = "var(--success)"; }
-        else if (mp?.status === "failed") { scoreText = `✗ ${mp.quizScore}/${mp.totalQuestions || 5}`; color = "var(--danger)"; }
-        else if (mp?.status === "in_progress") { scoreText = "In progress"; color = "var(--warning)"; }
-        quizRows += `<div class="quiz-line"><span>Module ${i}</span><span style="color:${color};">${scoreText}</span></div>`;
+      for (let i=1;i<=MODULES_COUNT;i++) {
+        const mId=`module_${i}`, mp=progressMap[trainee.id]?.[mId];
+        let scoreText="Not started", color="var(--ink-3)";
+        if (mp?.status==="passed"){scoreText=`✓ ${mp.quizScore}/${mp.totalQuestions||5}`;color="var(--success)";}
+        else if (mp?.status==="failed"){scoreText=`✗ ${mp.quizScore}/${mp.totalQuestions||5}`;color="var(--danger)";}
+        else if (mp?.status==="in_progress"){scoreText="In progress";color="var(--warning)";}
+        quizRows+=`<div class="quiz-line"><span>Module ${i}</span><span style="color:${color};">${scoreText}</span></div>`;
       }
-
-      // Sign-off cards
       let signoffCards = SIGNOFF_STEPS.map(step => {
-        const done = cert[step.key];
-        const dateVal = cert[step.dateKey];
-        const dateStr = dateVal
-          ? new Date(dateVal.seconds * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-          : "";
-        return `
-          <div class="detail-card">
-            <div class="detail-card-label">${step.label}</div>
-            ${done
-              ? `<div class="badge badge-pass" style="margin-bottom:8px;">✓ Signed off${dateStr ? " · " + dateStr : ""}</div><br>
-                 <button class="btn btn-ghost btn-sm" onclick="handleRevoke('${trainee.id}','${step.key}','${step.dateKey}')">Revoke</button>`
-              : `<div class="badge badge-pending" style="margin-bottom:8px;">Pending</div><br>
-                 <button class="btn btn-primary btn-sm" onclick="handleSignOff('${trainee.id}','${step.key}','${step.dateKey}')">Sign off ✓</button>`
-            }
-          </div>`;
+        const done=cert[step.key], dateVal=cert[step.dateKey];
+        const dateStr=dateVal?new Date(dateVal.seconds*1000).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"";
+        return `<div class="detail-card">
+          <div class="detail-card-label">${step.label}</div>
+          ${done
+            ?`<div class="badge badge-pass" style="margin-bottom:8px;">✓ Signed off${dateStr?" · "+dateStr:""}</div><br><button class="btn btn-ghost btn-sm" onclick="handleRevoke('${trainee.id}','${step.key}','${step.dateKey}')">Revoke</button>`
+            :`<div class="badge badge-pending" style="margin-bottom:8px;">Pending</div><br><button class="btn btn-primary btn-sm" onclick="handleSignOff('${trainee.id}','${step.key}','${step.dateKey}')">Sign off ✓</button>`
+          }</div>`;
       }).join("");
-
-      return `
-        <div class="detail-grid">
-          <div class="detail-card">
-            <div class="detail-card-label">Module quizzes</div>
-            ${quizRows}
-          </div>
-          ${signoffCards}
-        </div>`;
+      return `<div class="detail-grid"><div class="detail-card"><div class="detail-card-label">Module quizzes</div>${quizRows}</div>${signoffCards}</div>`;
     }
 
     window.toggleTrainee = function(uid) {
-      const detail = document.getElementById(`detail-${uid}`);
-      const chev = document.getElementById(`chev-${uid}`);
-      const header = detail.previousElementSibling;
-      const isOpen = detail.classList.contains("open");
-      detail.classList.toggle("open", !isOpen);
-      chev.classList.toggle("open", !isOpen);
-      header.classList.toggle("expanded", !isOpen);
+      const detail=document.getElementById(`detail-${uid}`);
+      const chev=document.getElementById(`chev-${uid}`);
+      const header=detail.previousElementSibling;
+      const isOpen=detail.classList.contains("open");
+      detail.classList.toggle("open",!isOpen);
+      chev.classList.toggle("open",!isOpen);
+      header.classList.toggle("expanded",!isOpen);
     };
 
     window.handleSignOff = async function(uid, stepKey, dateKey) {
       try {
-        await adminSignOffFn({ traineeUid: uid, stepKey, dateKey });
-        // Refresh cert data
-        const snap = await getDoc(doc(db, "certifications", uid));
-        certMap[uid] = snap.exists() ? snap.data() : {};
-        // Check if now certified
-        const uSnap = await getDoc(doc(db, "users", uid));
+        await adminSignOffFn({traineeUid:uid,stepKey,dateKey});
+        const snap=await getDoc(doc(db,"certifications",uid));
+        certMap[uid]=snap.exists()?snap.data():{};
+        const uSnap=await getDoc(doc(db,"users",uid));
         if (uSnap.data()?.certified) {
-          const t = allTrainees.find(t => t.id === uid);
-          if (t) t.certified = true;
-          showToast(`${t?.name} is now Belladonna Certified! 🎉`, "success");
-        } else {
-          showToast("Sign-off recorded.", "success");
-        }
+          const t=allTrainees.find(t=>t.id===uid);
+          if(t) t.certified=true;
+          showToast(`${t?.name} is now Belladonna Certified! 🎉`,"success");
+        } else { showToast("Sign-off recorded.","success"); }
         refreshDetail(uid);
-      } catch(e) {
-        showToast("Failed to record sign-off.", "error");
-      }
+      } catch(e) { showToast("Failed to record sign-off.","error"); }
     };
 
     window.handleRevoke = async function(uid, stepKey, dateKey) {
       if (!confirm("Revoke this sign-off?")) return;
       try {
-        await revokeSignOffFn({ traineeUid: uid, stepKey, dateKey });
-        const snap = await getDoc(doc(db, "certifications", uid));
-        certMap[uid] = snap.exists() ? snap.data() : {};
-        const t = allTrainees.find(t => t.id === uid);
-        if (t) t.certified = false;
-        showToast("Sign-off revoked.", "info");
+        await revokeSignOffFn({traineeUid:uid,stepKey,dateKey});
+        const snap=await getDoc(doc(db,"certifications",uid));
+        certMap[uid]=snap.exists()?snap.data():{};
+        const t=allTrainees.find(t=>t.id===uid);
+        if(t) t.certified=false;
+        showToast("Sign-off revoked.","info");
         refreshDetail(uid);
-      } catch(e) {
-        showToast("Failed to revoke.", "error");
-      }
+      } catch(e) { showToast("Failed to revoke.","error"); }
     };
 
     function refreshDetail(uid) {
-      const trainee = allTrainees.find(t => t.id === uid);
-      const detail = document.getElementById(`detail-${uid}`);
-      if (trainee && detail) {
-        detail.innerHTML = buildDetail(trainee, certMap[uid] || {});
+      const trainee=allTrainees.find(t=>t.id===uid);
+      const detail=document.getElementById(`detail-${uid}`);
+      if(trainee&&detail) detail.innerHTML=buildDetail(trainee,certMap[uid]||{});
+    }
+
+    // ── CONTENT EDITOR ────────────────────────────────────────────────────────
+    function buildModuleNav() {
+      const nav = document.getElementById("module-nav");
+      nav.innerHTML = MODULE_DEFS.map(m =>
+        `<button class="mod-tab ${m.id===currentModuleId?"active":""}" onclick="selectModule('${m.id}',this)">${m.label}</button>`
+      ).join("");
+    }
+
+    window.selectModule = function(moduleId, btn) {
+      currentModuleId = moduleId;
+      document.querySelectorAll(".mod-tab").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      loadModuleContent(moduleId);
+    };
+
+    async function loadModuleContent(moduleId) {
+      const editor = document.getElementById("module-editor");
+      editor.innerHTML = `<div class="loading-wrap" style="min-height:200px;"><div class="spinner"></div></div>`;
+
+      const [modSnap, vidSnap, queSnap] = await Promise.all([
+        getDoc(doc(db,"modules",moduleId)),
+        getDocs(query(collection(db,"modules",moduleId,"videos"),orderBy("order"))),
+        getDocs(query(collection(db,"modules",moduleId,"questions"),orderBy("order"))),
+      ]);
+
+      moduleData = modSnap.exists() ? {id:modSnap.id,...modSnap.data()} : {id:moduleId,title:"",description:"",content:"",order:parseInt(moduleId.split("_")[1]),passingScore:4,totalQuestions:5};
+      videosData = vidSnap.docs.map(d=>({id:d.id,...d.data()}));
+      questionsData = queSnap.docs.map(d=>({id:d.id,...d.data()}));
+
+      // Parse content blocks from content field
+      contentBlocksData = parseContentBlocks(moduleData.content||"");
+
+      renderEditor();
+    }
+
+    function parseContentBlocks(content) {
+      if (!content) return [];
+      // Split by double newline into blocks
+      return content.split("\n\n").filter(b=>b.trim()).map((b,i)=>({tempId:`block_${i}`,text:b.trim()}));
+    }
+
+    function serializeContentBlocks(blocks) {
+      return blocks.map(b=>b.text).join("\n\n");
+    }
+
+    function renderEditor() {
+      const editor = document.getElementById("module-editor");
+      editor.innerHTML = `
+
+        <!-- Module basics -->
+        <div class="editor-section">
+          <div class="editor-section-header">
+            <span class="editor-section-title">Module info</span>
+          </div>
+          <div class="editor-section-body" style="display:flex;flex-direction:column;gap:10px;">
+            <div>
+              <label>Title</label>
+              <input type="text" id="mod-title" value="${escHtml(moduleData.title||"")}" placeholder="Module 1 — Brand & ethics"/>
+            </div>
+            <div>
+              <label>Short description (shows on dashboard)</label>
+              <input type="text" id="mod-desc" value="${escHtml(moduleData.description||"")}" placeholder="Identity, dress code, interaction ethics"/>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div>
+                <label>Passing score (out of total questions)</label>
+                <input type="number" id="mod-passing" value="${moduleData.passingScore||4}" min="1" max="20"/>
+              </div>
+              <div>
+                <label>Total questions</label>
+                <input type="number" id="mod-total" value="${moduleData.totalQuestions||5}" min="1" max="20"/>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Content blocks -->
+        <div class="editor-section">
+          <div class="editor-section-header">
+            <span class="editor-section-title">Content sections</span>
+            <span style="font-size:12px;color:var(--ink-3);">Drag to reorder</span>
+          </div>
+          <div class="editor-section-body">
+            <div id="content-blocks-list"></div>
+            <button class="add-btn" onclick="addContentBlock()">+ Add content section</button>
+          </div>
+        </div>
+
+        <!-- Videos -->
+        <div class="editor-section">
+          <div class="editor-section-header">
+            <span class="editor-section-title">Videos</span>
+            <span style="font-size:12px;color:var(--ink-3);">Drag to reorder</span>
+          </div>
+          <div class="editor-section-body">
+            <div id="videos-list"></div>
+            <button class="add-btn" onclick="addVideo()">+ Add video</button>
+          </div>
+        </div>
+
+        <!-- Quiz questions -->
+        <div class="editor-section">
+          <div class="editor-section-header">
+            <span class="editor-section-title">Quiz questions</span>
+            <span style="font-size:12px;color:var(--ink-3);">Drag to reorder</span>
+          </div>
+          <div class="editor-section-body">
+            <div id="questions-list"></div>
+            <button class="add-btn" onclick="addQuestion()">+ Add question</button>
+          </div>
+        </div>
+
+        <div class="save-bar">
+          <span class="save-status" id="save-status"></span>
+          <button class="btn btn-ghost" onclick="loadModuleContent(currentModuleId)">Discard changes</button>
+          <button class="btn btn-primary btn-lg" onclick="saveAll()">Save all changes</button>
+        </div>`;
+
+      renderContentBlocks();
+      renderVideos();
+      renderQuestions();
+    }
+
+    // ── Content blocks ────────────────────────────────────────────────────────
+    function renderContentBlocks() {
+      const list = document.getElementById("content-blocks-list");
+      if (!list) return;
+      list.innerHTML = "";
+      contentBlocksData.forEach((block, idx) => {
+        const div = document.createElement("div");
+        div.className = "item-card";
+        div.draggable = true;
+        div.dataset.idx = idx;
+        div.dataset.type = "content";
+        div.innerHTML = `
+          <div class="drag-handle" title="Drag to reorder">⠿</div>
+          <div class="item-fields">
+            <textarea placeholder="Write your content here..." rows="4"
+              onchange="contentBlocksData[${idx}].text=this.value"
+              onkeyup="contentBlocksData[${idx}].text=this.value"
+            >${escHtml(block.text||"")}</textarea>
+          </div>
+          <button class="delete-btn" onclick="deleteContentBlock(${idx})" title="Delete">✕</button>`;
+        addDragListeners(div, "content");
+        list.appendChild(div);
+      });
+    }
+
+    window.addContentBlock = function() {
+      contentBlocksData.push({tempId:`block_${Date.now()}`,text:""});
+      renderContentBlocks();
+      // Focus the new textarea
+      const textareas = document.querySelectorAll("#content-blocks-list textarea");
+      if (textareas.length) textareas[textareas.length-1].focus();
+    };
+
+    window.deleteContentBlock = function(idx) {
+      if (!confirm("Delete this content section?")) return;
+      contentBlocksData.splice(idx,1);
+      renderContentBlocks();
+    };
+
+    // ── Videos ────────────────────────────────────────────────────────────────
+    function renderVideos() {
+      const list = document.getElementById("videos-list");
+      if (!list) return;
+      list.innerHTML = "";
+      videosData.forEach((vid, idx) => {
+        const div = document.createElement("div");
+        div.className = "item-card";
+        div.draggable = true;
+        div.dataset.idx = idx;
+        div.dataset.type = "video";
+        const ytId = vid.youtubeId||"";
+        div.innerHTML = `
+          <div class="drag-handle" title="Drag to reorder">⠿</div>
+          <div class="item-fields">
+            <input type="text" placeholder="Video title" value="${escHtml(vid.title||"")}"
+              onchange="videosData[${idx}].title=this.value"
+              onkeyup="videosData[${idx}].title=this.value"/>
+            <input type="text" placeholder="YouTube URL or video ID (e.g. dQw4w9WgXcQ)"
+              value="${escHtml(ytId)}"
+              onchange="handleYouTubeInput(this,${idx})"
+              onkeyup="handleYouTubeInput(this,${idx})"/>
+            ${ytId ? `<div class="youtube-preview"><iframe src="https://www.youtube.com/embed/${ytId}?rel=0" allowfullscreen></iframe></div>` : ""}
+          </div>
+          <button class="delete-btn" onclick="deleteVideo(${idx})" title="Delete">✕</button>`;
+        addDragListeners(div, "video");
+        list.appendChild(div);
+      });
+    }
+
+    window.handleYouTubeInput = function(input, idx) {
+      let val = input.value.trim();
+      // Extract ID from full URL if pasted
+      const match = val.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
+      if (match) val = match[1];
+      videosData[idx].youtubeId = val;
+      // Show preview if valid ID
+      const card = input.closest(".item-card");
+      let preview = card.querySelector(".youtube-preview");
+      if (val.length === 11) {
+        if (!preview) {
+          preview = document.createElement("div");
+          preview.className = "youtube-preview";
+          card.querySelector(".item-fields").appendChild(preview);
+        }
+        preview.innerHTML = `<iframe src="https://www.youtube.com/embed/${val}?rel=0" allowfullscreen></iframe>`;
+      } else if (preview) {
+        preview.innerHTML = "";
       }
+    };
+
+    window.addVideo = function() {
+      const newOrder = videosData.length ? Math.max(...videosData.map(v=>v.order||0))+1 : 1;
+      videosData.push({tempId:`vid_${Date.now()}`,title:"",youtubeId:"",order:newOrder});
+      renderVideos();
+      const inputs = document.querySelectorAll("#videos-list input[type=text]");
+      if (inputs.length) inputs[inputs.length-2].focus();
+    };
+
+    window.deleteVideo = function(idx) {
+      if (!confirm("Delete this video?")) return;
+      videosData.splice(idx,1);
+      renderVideos();
+    };
+
+    // ── Questions ─────────────────────────────────────────────────────────────
+    function renderQuestions() {
+      const list = document.getElementById("questions-list");
+      if (!list) return;
+      list.innerHTML = "";
+      questionsData.forEach((q, idx) => {
+        const options = q.options || ["","","",""];
+        while (options.length < 4) options.push("");
+        const div = document.createElement("div");
+        div.className = "item-card";
+        div.draggable = true;
+        div.dataset.idx = idx;
+        div.dataset.type = "question";
+        div.style.flexDirection = "column";
+        div.innerHTML = `
+          <div style="display:flex;gap:8px;align-items:flex-start;width:100%;">
+            <div class="drag-handle" title="Drag to reorder">⠿</div>
+            <div class="item-fields" style="flex:1;">
+              <input type="text" placeholder="Question ${idx+1}" value="${escHtml(q.question||"")}"
+                onchange="questionsData[${idx}].question=this.value"
+                onkeyup="questionsData[${idx}].question=this.value"/>
+              <div style="margin-top:6px;">
+                <div style="font-size:12px;color:var(--ink-3);margin-bottom:4px;">Answer options — select the correct one</div>
+                ${options.map((opt,oi)=>`
+                  <div class="option-row" style="margin-bottom:5px;">
+                    <input type="radio" name="correct_${idx}" class="correct-radio"
+                      ${q.correctIndex===oi?"checked":""}
+                      onchange="questionsData[${idx}].correctIndex=${oi}"
+                      title="Mark as correct answer"/>
+                    <span style="font-size:12px;color:var(--ink-3);width:16px;flex-shrink:0;">${String.fromCharCode(65+oi)}</span>
+                    <input type="text" placeholder="Option ${String.fromCharCode(65+oi)}" value="${escHtml(opt)}"
+                      onchange="questionsData[${idx}].options[${oi}]=this.value"
+                      onkeyup="questionsData[${idx}].options[${oi}]=this.value"/>
+                  </div>`).join("")}
+              </div>
+            </div>
+            <button class="delete-btn" onclick="deleteQuestion(${idx})" title="Delete">✕</button>
+          </div>`;
+        addDragListeners(div, "question");
+        list.appendChild(div);
+      });
+    }
+
+    window.addQuestion = function() {
+      const newOrder = questionsData.length ? Math.max(...questionsData.map(q=>q.order||0))+1 : 1;
+      questionsData.push({tempId:`q_${Date.now()}`,question:"",options:["","","",""],correctIndex:0,order:newOrder});
+      renderQuestions();
+    };
+
+    window.deleteQuestion = function(idx) {
+      if (!confirm("Delete this question?")) return;
+      questionsData.splice(idx,1);
+      renderQuestions();
+    };
+
+    // ── Drag to reorder ───────────────────────────────────────────────────────
+    function addDragListeners(el, type) {
+      el.addEventListener("dragstart", e => { dragSrc=el; el.classList.add("dragging"); e.dataTransfer.effectAllowed="move"; });
+      el.addEventListener("dragend", () => { el.classList.remove("dragging"); dragSrc=null; });
+      el.addEventListener("dragover", e => { e.preventDefault(); e.dataTransfer.dropEffect="move"; });
+      el.addEventListener("drop", e => {
+        e.preventDefault();
+        if (!dragSrc || dragSrc===el) return;
+        const fromIdx = parseInt(dragSrc.dataset.idx);
+        const toIdx = parseInt(el.dataset.idx);
+        if (type==="content") {
+          const item = contentBlocksData.splice(fromIdx,1)[0];
+          contentBlocksData.splice(toIdx,0,item);
+          renderContentBlocks();
+        } else if (type==="video") {
+          const item = videosData.splice(fromIdx,1)[0];
+          videosData.splice(toIdx,0,item);
+          renderVideos();
+        } else if (type==="question") {
+          const item = questionsData.splice(fromIdx,1)[0];
+          questionsData.splice(toIdx,0,item);
+          renderQuestions();
+        }
+      });
+    }
+
+    // ── Save ──────────────────────────────────────────────────────────────────
+    window.saveAll = async function() {
+      const saveBtn = document.querySelector(".save-bar .btn-primary");
+      const status = document.getElementById("save-status");
+      saveBtn.textContent = "Saving…";
+      saveBtn.disabled = true;
+      status.textContent = "";
+      status.className = "save-status";
+
+      try {
+        // Read current form values
+        const title = document.getElementById("mod-title").value.trim();
+        const description = document.getElementById("mod-desc").value.trim();
+        const passingScore = parseInt(document.getElementById("mod-passing").value)||4;
+        const totalQuestions = parseInt(document.getElementById("mod-total").value)||5;
+        const content = serializeContentBlocks(contentBlocksData);
+
+        // Save module doc
+        await setDoc(doc(db,"modules",currentModuleId), {
+          id: currentModuleId,
+          order: parseInt(currentModuleId.split("_")[1]),
+          title, description, content, passingScore, totalQuestions
+        });
+
+        // Save videos — delete old, write new with order
+        const oldVids = await getDocs(collection(db,"modules",currentModuleId,"videos"));
+        await Promise.all(oldVids.docs.map(d=>deleteDoc(d.ref)));
+        await Promise.all(videosData.map((v,i) => {
+          const vidId = v.id || `video_${i+1}`;
+          return setDoc(doc(db,"modules",currentModuleId,"videos",vidId), {
+            id: vidId, order: i+1, title: v.title||"", youtubeId: v.youtubeId||""
+          });
+        }));
+
+        // Save questions — delete old, write new with order
+        const oldQues = await getDocs(collection(db,"modules",currentModuleId,"questions"));
+        await Promise.all(oldQues.docs.map(d=>deleteDoc(d.ref)));
+        await Promise.all(questionsData.map((q,i) => {
+          const qId = q.id || `q${i+1}`;
+          return setDoc(doc(db,"modules",currentModuleId,"questions",qId), {
+            order: i+1,
+            question: q.question||"",
+            options: q.options||["","","",""],
+            correctIndex: q.correctIndex||0
+          });
+        }));
+
+        status.textContent = "✓ Saved";
+        status.className = "save-status saved";
+        showToast("Module saved successfully.","success");
+        setTimeout(()=>{ status.textContent=""; },3000);
+      } catch(e) {
+        console.error(e);
+        showToast("Save failed. Please try again.","error");
+        status.textContent = "Save failed";
+      } finally {
+        saveBtn.textContent = "Save all changes";
+        saveBtn.disabled = false;
+      }
+    };
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function escHtml(str) {
+      return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
     }
   </script>
 </body>
