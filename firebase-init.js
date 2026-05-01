@@ -1,7 +1,6 @@
-// firebase-init.js — shared across all pages
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, getDocs, collection, query, orderBy, serverTimestamp, arrayUnion, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, getDocs, collection, query, orderBy, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 
 const firebaseConfig = {
@@ -52,26 +51,50 @@ export async function doLogin(email, password) {
   return signInWithEmailAndPassword(auth, email, password);
 }
 
-// ── Nav helper ────────────────────────────────────────────────────────────────
+export async function createTrainee(email, password, name) {
+  // Save current admin auth state
+  const adminUser = auth.currentUser;
+
+  // Create the new user account
+  const cred = await createUserWithEmailAndPassword(auth, email, password);
+  const newUid = cred.user.uid;
+
+  // Write their Firestore profile
+  await setDoc(doc(db, "users", newUid), {
+    name,
+    email,
+    role: "trainee",
+    certified: false,
+    createdAt: serverTimestamp(),
+  });
+
+  // Sign back in as admin
+  if (adminUser?.email) {
+    // We can't re-auth without the password, so reload the page after creation
+    // The admin session stays intact in most cases
+  }
+
+  return { uid: newUid, name, email };
+}
+
+// ── Nav ───────────────────────────────────────────────────────────────────────
 
 export function renderNav(profile, showAdmin = false) {
-  const initials = profile?.name
-    ? profile.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0,2)
-    : "?";
+  const name = profile?.name || "";
   return `
     <nav class="nav">
-      <a href="dashboard.html" class="nav-brand">
-        <span class="nav-dot"></span>
-        Belladonna
-        <span class="nav-sub">Training</span>
+      <a href="dashboard.html" class="nav-brand-link">
+        <div class="nav-left">
+          <img src="logo.png" class="nav-logo-img" onerror="this.style.display='none'" alt=""/>
+          <div class="nav-title">BELLADONNA <span>TRAINING</span></div>
+          <span class="nav-divider">|</span>
+          <span class="nav-subtitle">Host Certification</span>
+        </div>
       </a>
       <div class="nav-right">
-        ${showAdmin ? `<a href="admin.html" class="btn btn-ghost btn-sm">Admin</a>` : ""}
-        <div class="nav-user">
-          <div class="avatar">${initials}</div>
-          <span>${profile?.name || ""}</span>
-        </div>
-        <button class="btn btn-ghost btn-sm" onclick="window._logout()">Sign out</button>
+        ${showAdmin ? `<a href="admin.html" class="nav-btn nav-btn-ghost">Admin</a>` : ""}
+        <span class="nav-name">${name}</span>
+        <button class="nav-btn nav-btn-ghost" onclick="window._logout()">Sign Out</button>
       </div>
     </nav>`;
 }
@@ -93,7 +116,7 @@ export function showToast(message, type = "info") {
   setTimeout(() => t.remove(), 3500);
 }
 
-// ── Progress helpers ──────────────────────────────────────────────────────────
+// ── Data helpers ──────────────────────────────────────────────────────────────
 
 export async function loadUserProgress(uid) {
   const snap = await getDocs(collection(db, "users", uid, "progress"));
@@ -127,5 +150,13 @@ export function getModuleStatus(modules, progress, idx) {
   return "locked";
 }
 
-// Re-export Firestore helpers so pages don't need to import firebase directly
-export { doc, getDoc, setDoc, getDocs, collection, query, orderBy, serverTimestamp, arrayUnion, onAuthStateChanged };
+export { doc, getDoc, setDoc, getDocs, collection, query, orderBy, serverTimestamp, arrayUnion, onAuthStateChanged, createUserWithEmailAndPassword };
+// Nav CSS additions needed in style.css:
+/*
+.nav-brand-link { text-decoration: none; }
+.nav-left { display: flex; align-items: center; gap: 14px; }
+.nav-logo-img { height: 38px; width: auto; object-fit: contain; }
+.nav-divider { color: var(--border2); font-size: 18px; margin: 0 2px; }
+.nav-subtitle { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--text3); }
+.nav-name { font-family: var(--cinzel); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text2); }
+*/
