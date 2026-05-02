@@ -257,6 +257,19 @@
         ]);
         sub.videos=svSnap.docs.map(v=>({id:v.id,...v.data()}));
         sub.images=siSnap.docs.map(i=>({id:i.id,...i.data()}));
+        // Load subsections (sub-sub-modules)
+        const ssSnap = await getDocs(query(collection(db,"modules",m.id,"submodules",sd.id,"subsections"),orderBy("order"))).catch(()=>({docs:[]}));
+        sub.subsections = await Promise.all(ssSnap.docs.map(async ss => {
+          const ssData={id:ss.id,...ss.data()};
+          const [ssVids,ssImgs]=await Promise.all([
+            getDocs(collection(db,"modules",m.id,"submodules",sd.id,"subsections",ss.id,"videos")).catch(()=>({docs:[]})),
+            getDocs(collection(db,"modules",m.id,"submodules",sd.id,"subsections",ss.id,"images")).catch(()=>({docs:[]})),
+          ]);
+          ssData.videos=ssVids.docs.map(v=>({id:v.id,...v.data()}));
+          ssData.images=ssImgs.docs.map(i=>({id:i.id,...i.data()}));
+          ssData.contentBlocks=(ssData.content||"").split("\n\n").filter(b=>b.trim()).map((b,i)=>({tempId:`ssc${i}`,text:b.trim()}));
+          return ssData;
+        }));
         sub.contentBlocks=(sub.content||"").split("\n\n").filter(b=>b.trim()).map((b,i)=>({tempId:`sb${i}`,text:b.trim()}));
         return sub;
       }));
@@ -666,6 +679,17 @@
             <div id="sub-videos-list"></div>
             <button class="add-item-btn" id="add-sub-video-btn">+ Add Video</button>
           </div>
+        </div>
+
+        <div class="editor-section" style="border-color:var(--gold-border);">
+          <div class="editor-section-header" style="background:var(--gold-dim);">
+            <span class="editor-section-title" style="color:var(--gold2);">Sub-sub-modules (e.g. 2.A, 2.B)</span>
+            <span style="font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic;">Nested sections within this sub-module</span>
+          </div>
+          <div class="editor-section-body">
+            <div id="subsections-list"></div>
+            <button class="add-item-btn" id="add-subsection-btn">+ Add Sub-sub-module</button>
+          </div>
         </div>`;
 
       document.getElementById("sub-banner").addEventListener("input",function(){
@@ -676,10 +700,79 @@
       document.getElementById("add-sub-content-btn").onclick=()=>{ if(!sub.contentBlocks)sub.contentBlocks=[]; sub.contentBlocks.push({tempId:`sc${Date.now()}`,text:""}); renderSubContentList(mi,si); };
       document.getElementById("add-sub-image-btn").onclick=()=>{ if(!sub.images)sub.images=[]; sub.images.push({tempId:`si${Date.now()}`,url:"",caption:"",order:sub.images.length+1}); renderSubImagesList(mi,si); };
       document.getElementById("add-sub-video-btn").onclick=()=>{ if(!sub.videos)sub.videos=[]; sub.videos.push({tempId:`sv${Date.now()}`,title:"",youtubeId:"",order:sub.videos.length+1}); renderSubVideosList(mi,si); };
+      document.getElementById("add-subsection-btn").onclick=()=>{ if(!sub.subsections)sub.subsections=[]; sub.subsections.push({id:`ss_${Date.now()}`,title:"New Section",description:"",order:`${mi+1}.${si+1}${String.fromCharCode(65+sub.subsections.length)}`,content:"",bannerImage:"",contentBlocks:[],videos:[],images:[],_new:true}); renderSubsectionsList(mi,si); };
 
       renderSubContentList(mi,si);
       renderSubImagesList(mi,si);
       renderSubVideosList(mi,si);
+      renderSubsectionsList(mi,si);
+    }
+
+    function renderSubsectionsList(mi, si) {
+      const list = document.getElementById("subsections-list"); if(!list) return;
+      list.innerHTML = "";
+      const sub = modulesData[mi].submodules[si];
+      const sections = sub.subsections || [];
+      if (!sections.length) { list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No sub-sub-modules yet.</p>`; return; }
+
+      sections.forEach((ss, ssi) => {
+        const card = document.createElement("div");
+        card.style.cssText = "background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:8px;";
+
+        // Header row
+        const header = document.createElement("div");
+        header.style.cssText = "display:flex;align-items:center;gap:8px;margin-bottom:10px;";
+
+        const orderIn = makeEl("input","2.A",ss.order||"",e=>{ sections[ssi].order=e.target.value; },"input-std");
+        orderIn.style.width="70px";orderIn.style.flex="none";
+        const titleIn = makeEl("input","Section title",ss.title||"",e=>sections[ssi].title=e.target.value,"input-std");
+        const del = document.createElement("button"); del.className="delete-btn"; del.textContent="✕";
+        del.onclick=()=>{ if(confirm("Delete?")) { sections.splice(ssi,1); renderSubsectionsList(mi,si); } };
+
+        const orderWrap = document.createElement("div"); orderWrap.style.cssText="display:flex;flex-direction:column;gap:4px;flex-shrink:0;";
+        const orderLabel = document.createElement("label"); orderLabel.textContent="Order"; orderLabel.style.fontSize="10px";
+        orderWrap.appendChild(orderLabel); orderWrap.appendChild(orderIn);
+
+        const titleWrap = document.createElement("div"); titleWrap.style.cssText="display:flex;flex-direction:column;gap:4px;flex:1;";
+        const titleLabel = document.createElement("label"); titleLabel.textContent="Title"; titleLabel.style.fontSize="10px";
+        titleWrap.appendChild(titleLabel); titleWrap.appendChild(titleIn);
+
+        header.appendChild(orderWrap); header.appendChild(titleWrap); header.appendChild(del);
+        card.appendChild(header);
+
+        // Banner
+        const bannerWrap = document.createElement("div"); bannerWrap.style.marginBottom="8px";
+        const bannerLabel = document.createElement("label"); bannerLabel.textContent="Banner image URL"; bannerLabel.style.fontSize="10px";
+        const bannerIn = makeEl("input","https://...",ss.bannerImage||"",e=>{ sections[ssi].bannerImage=e.target.value; },"input-std");
+        bannerWrap.appendChild(bannerLabel); bannerWrap.appendChild(bannerIn);
+        card.appendChild(bannerWrap);
+
+        // Content textarea
+        const contentWrap = document.createElement("div"); contentWrap.style.marginBottom="8px";
+        const contentLabel = document.createElement("label"); contentLabel.textContent="Content"; contentLabel.style.fontSize="10px";
+        if (!ss.contentBlocks) ss.contentBlocks = ss.content ? ss.content.split("\n\n").filter(b=>b.trim()).map((b,i)=>({tempId:`ssc${i}`,text:b.trim()})) : [];
+        const ta = makeEl("textarea","Write content...",ss.contentBlocks.map(b=>b.text).join("\n\n")||"",e=>{
+          sections[ssi].contentBlocks = e.target.value.split("\n\n").filter(b=>b.trim()).map((b,i)=>({tempId:`ssc${i}`,text:b.trim()}));
+        },"textarea-std");
+        ta.style.minHeight="60px";
+        contentWrap.appendChild(contentLabel); contentWrap.appendChild(ta);
+        card.appendChild(contentWrap);
+
+        // Video URL
+        const vidWrap = document.createElement("div");
+        const vidLabel = document.createElement("label"); vidLabel.textContent="YouTube video (optional)"; vidLabel.style.fontSize="10px";
+        const firstVid = (ss.videos||[])[0];
+        const vidIn = makeEl("input","YouTube URL or video ID",firstVid?.youtubeId||"",e=>{
+          let val=e.target.value.trim(); const m2=val.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/); if(m2)val=m2[1];
+          if(!sections[ssi].videos)sections[ssi].videos=[];
+          if(sections[ssi].videos[0])sections[ssi].videos[0].youtubeId=val;
+          else sections[ssi].videos=[{id:`ssv_${Date.now()}`,order:1,title:sections[ssi].title||"",youtubeId:val}];
+        },"input-std");
+        vidWrap.appendChild(vidLabel); vidWrap.appendChild(vidIn);
+        card.appendChild(vidWrap);
+
+        list.appendChild(card);
+      });
     }
 
     window.updateSubTitle=function(mi,si,val){
@@ -836,6 +929,25 @@
         const oldSI=await getDocs(collection(db,"modules",mod.id,"submodules",sub.id,"images"));
         await Promise.all(oldSI.docs.map(d=>deleteDoc(d.ref)));
         await Promise.all((sub.images||[]).map((img,i)=>setDoc(doc(db,"modules",mod.id,"submodules",sub.id,"images",img.id||`img_${i+1}`),{id:img.id||`img_${i+1}`,order:i+1,url:img.url||"",caption:img.caption||""})));
+
+        // Save subsections (sub-sub-modules)
+        const oldSS=await getDocs(collection(db,"modules",mod.id,"submodules",sub.id,"subsections"));
+        await Promise.all(oldSS.docs.map(d=>deleteDoc(d.ref)));
+        await Promise.all((sub.subsections||[]).map(async (ss,ssi)=>{
+          const ssContent=(ss.contentBlocks||[]).map(b=>b.text||"").filter(t=>t).join("\n\n");
+          await setDoc(doc(db,"modules",mod.id,"submodules",sub.id,"subsections",ss.id||`ss_${ssi+1}`),{
+            id:ss.id||`ss_${ssi+1}`,order:ss.order||"",title:ss.title||"",
+            description:ss.description||"",content:ssContent,bannerImage:ss.bannerImage||""
+          });
+          // Save subsection videos
+          const oldSSV=await getDocs(collection(db,"modules",mod.id,"submodules",sub.id,"subsections",ss.id,"videos"));
+          await Promise.all(oldSSV.docs.map(d=>deleteDoc(d.ref)));
+          await Promise.all((ss.videos||[]).map((v,vi)=>setDoc(doc(db,"modules",mod.id,"submodules",sub.id,"subsections",ss.id,"videos",v.id||`ssv_${vi+1}`),{id:v.id||`ssv_${vi+1}`,order:vi+1,title:v.title||"",youtubeId:v.youtubeId||""})));
+          // Save subsection images
+          const oldSSI=await getDocs(collection(db,"modules",mod.id,"submodules",sub.id,"subsections",ss.id,"images"));
+          await Promise.all(oldSSI.docs.map(d=>deleteDoc(d.ref)));
+          await Promise.all((ss.images||[]).map((img,ii)=>setDoc(doc(db,"modules",mod.id,"submodules",sub.id,"subsections",ss.id,"images",img.id||`ssi_${ii+1}`),{id:img.id||`ssi_${ii+1}`,order:ii+1,url:img.url||"",caption:img.caption||""})));
+        }));
 
         sub._new=false;
         renderSidebar();
