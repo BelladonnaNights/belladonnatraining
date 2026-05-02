@@ -126,23 +126,49 @@
 
     window._logout = doLogout;
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const isPreview = urlParams.get("preview") === "1";
+    const previewModuleId = urlParams.get("id");
+
     let currentUser = null;
     let allModules = [], progress = {};
     let currentModuleId = null, currentSubmoduleId = null, currentView = null;
-    let moduleCache = {}; // cache submodules, videos, questions per module
+    let moduleCache = {};
     let answers = {}, activeVid = 0;
 
     requireAuth(async (user, profile) => {
       currentUser = user;
       document.getElementById("nav-placeholder").innerHTML = renderNav(profile, profile.role === "admin");
 
-      [allModules, progress] = await Promise.all([loadModules(), loadUserProgress(user.uid)]);
+      // Show preview banner for admins in preview mode
+      if (isPreview && profile.role === "admin") {
+        const banner = document.createElement("div");
+        banner.style.cssText = "background:var(--gold-dim);border-bottom:1px solid var(--gold-border);padding:8px 1.5rem;display:flex;align-items:center;justify-content:space-between;";
+        banner.innerHTML = `
+          <span style="font-family:var(--cinzel);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);">
+            👁 Admin preview — trainees see this page without the top banner
+          </span>
+          <a href="admin.html" class="btn btn-ghost btn-sm" style="font-size:10px;">← Back to admin</a>`;
+        document.getElementById("app").insertAdjacentElement("afterbegin", banner);
+      }
+
+      // In preview mode, treat all modules as unlocked
+      [allModules, progress] = await Promise.all([
+        loadModules(),
+        isPreview ? Promise.resolve({}) : loadUserProgress(user.uid)
+      ]);
 
       renderSidebar();
       renderOverallProgress();
 
       document.getElementById("loading").style.display = "none";
       document.getElementById("app").style.display = "block";
+
+      // Auto-open the module from URL param
+      if (previewModuleId) {
+        const idx = allModules.findIndex(m => m.id === previewModuleId);
+        if (idx !== -1) toggleModule(previewModuleId, false);
+      }
     });
 
     // ── Overall progress ──────────────────────────────────────────────────────
@@ -158,7 +184,7 @@
       const container = document.getElementById("sidebar-modules");
       container.innerHTML = "";
       allModules.forEach((mod, idx) => {
-        const status = getModuleStatus(allModules, progress, idx);
+        const status = isPreview ? "available" : getModuleStatus(allModules, progress, idx);
         const locked = status === "locked";
         const passed = status === "passed";
 
