@@ -149,21 +149,12 @@
     let moduleCache = {};
     let answers = {}, activeVid = 0;
 
+    // Track which modules are expanded — all open by default
+    const openModules = new Set();
+
     requireAuth(async (user, profile) => {
       currentUser = user;
       document.getElementById("nav-placeholder").innerHTML = renderNav(profile, profile.role === "admin");
-
-      // Show preview banner for admins in preview mode
-      if (isPreview && profile.role === "admin") {
-        const banner = document.createElement("div");
-        banner.style.cssText = "background:var(--gold-dim);border-bottom:1px solid var(--gold-border);padding:8px 1.5rem;display:flex;align-items:center;justify-content:space-between;";
-        banner.innerHTML = `
-          <span style="font-family:var(--cinzel);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);">
-            👁 Admin preview — trainees see this page without the top banner
-          </span>
-          <a href="admin.html" class="btn btn-ghost btn-sm" style="font-size:10px;">← Back to admin</a>`;
-        document.getElementById("app").insertAdjacentElement("afterbegin", banner);
-      }
 
       // In preview mode, treat all modules as unlocked
       [allModules, progress] = await Promise.all([
@@ -177,10 +168,26 @@
       document.getElementById("loading").style.display = "none";
       document.getElementById("app").style.display = "block";
 
-      // Auto-open the module from URL param
+      // Show preview banner for admins in preview mode (after app is visible)
+      if (isPreview && profile.role === "admin") {
+        const banner = document.createElement("div");
+        banner.style.cssText = "background:var(--gold-dim);border-bottom:1px solid var(--gold-border);padding:8px 1.5rem;display:flex;align-items:center;justify-content:space-between;";
+        banner.innerHTML = `
+          <span style="font-family:var(--cinzel);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);">
+            👁 Admin preview — trainees see this page without the top banner
+          </span>
+          <a href="admin.html" class="btn btn-ghost btn-sm" style="font-size:10px;">← Back to admin</a>`;
+        document.getElementById("app").insertAdjacentElement("afterbegin", banner);
+      }
+
+      // Open all modules in sidebar by default
+      allModules.forEach(m => openModules.add(m.id));
+      renderSidebar();
+
+      // Auto-load the module from URL param (preview mode)
       if (previewModuleId) {
-        const idx = allModules.findIndex(m => m.id === previewModuleId);
-        if (idx !== -1) toggleModule(previewModuleId, false);
+        const mod = allModules.find(m => m.id === previewModuleId);
+        if (mod) await selectModuleIntro(previewModuleId);
       }
     });
 
@@ -191,9 +198,6 @@
       document.getElementById("overall-prog-fill").style.width = pct + "%";
       document.getElementById("overall-prog-label").textContent = `${passed}/${allModules.length} modules`;
     }
-
-    // Track which modules are expanded in sidebar (independent of active module)
-    const openModules = new Set();
 
     // ── Sidebar ───────────────────────────────────────────────────────────────
     function renderSidebar() {
