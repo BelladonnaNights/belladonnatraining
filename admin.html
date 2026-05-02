@@ -34,10 +34,15 @@
     .form-field{display:flex;flex-direction:column;}
 
     /* ── Content editor layout ── */
-    .content-layout{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 130px);border-top:1px solid var(--border);}
+    .content-layout{display:flex;min-height:calc(100vh - 130px);border-top:1px solid var(--border);}
 
     /* ── Content sidebar ── */
-    .content-sidebar{background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;position:sticky;top:0;max-height:calc(100vh - 130px);}
+    .content-sidebar{background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;position:sticky;top:0;max-height:calc(100vh - 130px);flex-shrink:0;width:260px;min-width:160px;max-width:500px;}
+
+    /* ── Resize handle ── */
+    .resize-handle{width:5px;background:transparent;cursor:col-resize;flex-shrink:0;transition:background .15s;position:relative;}
+    .resize-handle:hover,.resize-handle.dragging{background:var(--gold-border);}
+    .resize-handle::after{content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:3px;height:40px;border-radius:2px;background:var(--border2);}
     .cs-header{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
     .cs-label{font-family:var(--cinzel);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);}
     .cs-add-btn{width:20px;height:20px;border-radius:50%;background:var(--gold-dim);border:1px solid var(--gold-border);color:var(--gold);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0;transition:all .15s;}
@@ -143,17 +148,19 @@
 
     <!-- CONTENT TAB -->
     <div class="tab-panel" id="tab-content">
-      <div class="content-layout">
+      <div class="content-layout" id="content-layout">
         <!-- Content sidebar -->
-        <div class="content-sidebar">
+        <div class="content-sidebar" id="content-sidebar">
           <div class="cs-header">
             <span class="cs-label">Modules</span>
             <button class="cs-add-btn" title="Add new module" onclick="addModule()">+</button>
           </div>
           <div id="cs-module-list"></div>
         </div>
+        <!-- Resize handle -->
+        <div class="resize-handle" id="resize-handle"></div>
         <!-- Editor panel -->
-        <div class="editor-panel" id="editor-panel">
+        <div class="editor-panel" id="editor-panel" style="flex:1;overflow-y:auto;max-height:calc(100vh - 130px);">
           <div class="empty-editor">
             <div style="font-size:2rem;">✦</div>
             <p>Select a module or sub-module<br>from the sidebar to edit.</p>
@@ -207,9 +214,26 @@
     async function loadAllModules() {
       const panel = document.getElementById("cs-module-list");
       panel.innerHTML=`<div style="padding:1rem;text-align:center;"><div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0 auto;"></div></div>`;
-      const snap = await getDocs(query(collection(db,"modules"),orderBy("order")));
-      modulesData = await Promise.all(snap.docs.map(async d => {
-        const m = {id:d.id,...d.data(),_open:false};
+      
+      // Try ordered fetch first, fall back to unordered if no order field exists
+      let snap;
+      try {
+        snap = await getDocs(query(collection(db,"modules"),orderBy("order")));
+        if (snap.empty) throw new Error("empty ordered");
+      } catch(e) {
+        snap = await getDocs(collection(db,"modules"));
+      }
+
+      let docs = snap.docs.map(d => ({id:d.id,...d.data()}));
+      // Sort: by order field if present, otherwise by module number in ID, otherwise by title
+      docs.sort((a,b) => {
+        const aOrder = a.order ?? parseInt(a.id.replace(/\D/g,"")) ?? 999;
+        const bOrder = b.order ?? parseInt(b.id.replace(/\D/g,"")) ?? 999;
+        return aOrder - bOrder;
+      });
+
+      modulesData = await Promise.all(docs.map(async (d,i) => {
+        const m = {...d, order: d.order ?? i+1, _open:false};
         await loadModuleSubdata(m);
         return m;
       }));
@@ -364,8 +388,14 @@
     };
 
     window.deleteModule = async function(mi) {
-      if (!confirm(`Delete "${modulesData[mi].title||"this module"}" and all its content?`)) return;
       const mod = modulesData[mi];
+      const modName = mod.title || "this module";
+      const typed = prompt(`⚠️ PERMANENT DELETE\n\nThis will delete "${modName}" and ALL its sub-modules, videos, and questions.\n\nType the module title exactly to confirm:`);
+      if (typed === null) return;
+      if (typed.trim() !== modName.trim()) {
+        alert(`Title didn't match — "${modName}" was NOT deleted.`);
+        return;
+      }
       if (!mod._new) {
         // Delete from Firestore
         try {
@@ -903,6 +933,40 @@
     window.toggleTrainee=function(uid){const d=document.getElementById(`detail-${uid}`),c=document.getElementById(`chev-${uid}`),h=d.previousElementSibling,o=d.classList.contains("open");d.classList.toggle("open",!o);c.classList.toggle("open",!o);h.classList.toggle("expanded",!o);};
     window.handleSignOff=async function(uid,sk,dk){try{await adminSignOffFn({traineeUid:uid,stepKey:sk,dateKey:dk});const s=await getDoc(doc(db,"certifications",uid));certMap[uid]=s.exists()?s.data():{};const u=await getDoc(doc(db,"users",uid));if(u.data()?.certified){const t=allTrainees.find(t=>t.id===uid);if(t)t.certified=true;showToast(`${t?.name} is Certified!`,"success");}else{showToast("Sign-off recorded.","success");}document.getElementById(`detail-${uid}`).innerHTML=buildDetail(allTrainees.find(t=>t.id===uid),certMap[uid]||{});}catch(e){showToast("Sign-off failed.","error");}};
     window.handleRevoke=async function(uid,sk,dk){if(!confirm("Revoke?"))return;try{await revokeSignOffFn({traineeUid:uid,stepKey:sk,dateKey:dk});const s=await getDoc(doc(db,"certifications",uid));certMap[uid]=s.exists()?s.data():{};const t=allTrainees.find(t=>t.id===uid);if(t)t.certified=false;showToast("Revoked.","info");document.getElementById(`detail-${uid}`).innerHTML=buildDetail(t,certMap[uid]||{});}catch(e){showToast("Failed.","error");}};
+
+    // ── Resizable sidebar ─────────────────────────────────────────────────────
+    (function() {
+      const handle = document.getElementById("resize-handle");
+      const sidebar = document.getElementById("content-sidebar");
+      if (!handle || !sidebar) return;
+      let isResizing = false, startX = 0, startWidth = 0;
+
+      handle.addEventListener("mousedown", e => {
+        isResizing = true;
+        startX = e.clientX;
+        startWidth = sidebar.offsetWidth;
+        handle.classList.add("dragging");
+        document.body.style.cursor = "col-resize";
+        document.body.style.userSelect = "none";
+      });
+
+      document.addEventListener("mousemove", e => {
+        if (!isResizing) return;
+        const newWidth = Math.min(500, Math.max(160, startWidth + (e.clientX - startX)));
+        sidebar.style.width = newWidth + "px";
+      });
+
+      document.addEventListener("mouseup", () => {
+        if (!isResizing) return;
+        isResizing = false;
+        handle.classList.remove("dragging");
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      });
+    })();
+
+    // Init empty editor state
+    document.getElementById("editor-panel").innerHTML = `<div class="empty-editor"><div style="font-size:2rem;">✦</div><p>Select a module or sub-module<br>from the sidebar to edit.</p></div>`;
   </script>
 </body>
 </html>
