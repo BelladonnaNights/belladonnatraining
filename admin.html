@@ -623,7 +623,9 @@
             <div class="editor-subhead">Module ${mi+1} › Sub-module</div>
             <div class="editor-heading gold-text" id="editor-sub-title-display">${sub.title||"Untitled"}</div>
           </div>
-          <div style="display:flex;gap:8px;">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <span id="autosave-status" style="font-family:var(--cinzel);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);"></span>
+            <button class="btn btn-ghost btn-sm" onclick="openPreview('${mod.id}')">👁 Preview as Trainee</button>
             <button class="btn btn-ghost btn-sm" onclick="loadAllModules()">Discard</button>
             <button class="btn btn-primary" id="save-sub-btn" onclick="saveSubmodule(${mi},${si})">Save Sub-module</button>
           </div>
