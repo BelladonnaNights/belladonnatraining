@@ -180,10 +180,12 @@
         document.getElementById("app").insertAdjacentElement("afterbegin", banner);
       }
 
-      // Auto-load the module from URL param (preview mode)
+      // Auto-load the module from URL param (preview mode) — deferred so all functions are ready
       if (previewModuleId) {
-        const mod = allModules.find(m => m.id === previewModuleId);
-        if (mod) await selectModuleIntro(previewModuleId);
+        setTimeout(async () => {
+          const mod = allModules.find(m => m.id === previewModuleId);
+          if (mod) await selectModuleIntro(previewModuleId);
+        }, 100);
       }
     });
 
@@ -306,6 +308,27 @@
           </div>`;
         list.appendChild(quizItem);
       }
+    }
+
+    // ── Update sidebar active state without full re-render ───────────────────
+    function updateSidebarActive(moduleId, submoduleId, subsectionId) {
+      // Clear all active states
+      document.querySelectorAll(".mod-item-header").forEach(h => h.classList.remove("active"));
+      document.querySelectorAll(".mod-label").forEach(l => l.classList.remove("active"));
+      document.querySelectorAll(".submod-item").forEach(i => i.classList.remove("active"));
+      document.querySelectorAll(".submod-label").forEach(l => l.classList.remove("active"));
+      document.querySelectorAll(".submod-dot").forEach(d => d.classList.remove("active"));
+      document.querySelectorAll(".subsub-item").forEach(i => i.classList.remove("active"));
+
+      if (!submoduleId) {
+        // Module intro active
+        const header = document.getElementById(`modheader-${moduleId}`);
+        if (header) {
+          header.classList.add("active");
+          header.querySelector(".mod-label")?.classList.add("active");
+        }
+      }
+      // Sub-items are re-rendered by loadSubmoduleSidebar so they'll pick up active state
     }
 
     // Click the title → load base page
@@ -497,7 +520,15 @@
           {merge:true});
       }
 
-      renderSidebar();
+      // Update sidebar active state without re-rendering (preserves all open modules)
+      updateSidebarActive(moduleId, submoduleId, null);
+      if (!openModules.has(moduleId)) {
+        openModules.add(moduleId);
+        const chev = document.getElementById(`modchev-${moduleId}`);
+        const list = document.getElementById(`submodlist-${moduleId}`);
+        if (chev) chev.classList.add("open");
+        if (list) list.classList.add("open");
+      }
       await loadSubmoduleSidebar(moduleId);
 
       let html = "";
@@ -564,7 +595,15 @@
       currentView = "subsection";
       window._activeSubsectionId = subsectionId;
 
-      renderSidebar();
+      // Update sidebar active state without re-rendering
+      updateSidebarActive(moduleId, submoduleId, subsectionId);
+      if (!openModules.has(moduleId)) {
+        openModules.add(moduleId);
+        const chev = document.getElementById(`modchev-${moduleId}`);
+        const list = document.getElementById(`submodlist-${moduleId}`);
+        if (chev) chev.classList.add("open");
+        if (list) list.classList.add("open");
+      }
       await loadSubmoduleSidebar(moduleId);
 
       let html = "";
