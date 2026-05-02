@@ -470,7 +470,9 @@
             <div class="editor-subhead">Module ${mi+1}</div>
             <div class="editor-heading gold-text" id="editor-mod-title-display">${mod.title||"Untitled"}</div>
           </div>
-          <div style="display:flex;gap:8px;">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <span id="autosave-status" style="font-family:var(--cinzel);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);"></span>
+            <button class="btn btn-ghost btn-sm" onclick="openPreview('${mod.id}')">👁 Preview as Trainee</button>
             <button class="btn btn-ghost btn-sm" onclick="loadAllModules()">Discard</button>
             <button class="btn btn-primary" id="save-mod-btn" onclick="saveModule(${mi})">Save Module</button>
           </div>
@@ -748,9 +750,9 @@
     }
 
     // ── Save module ───────────────────────────────────────────────────────────
-    window.saveModule = async function(mi) {
+    window.saveModule = async function(mi, silent=false) {
       const btn=document.getElementById("save-mod-btn");
-      btn.textContent="Saving...";btn.disabled=true;
+      if (btn) { btn.textContent="Saving..."; btn.disabled=true; }
       const mod=modulesData[mi];
       try {
         mod.title=document.getElementById("mod-title").value.trim();
@@ -802,15 +804,16 @@
 
         mod._new=false;
         renderSidebar();
-        showToast("Module saved.","success");
+        markSaved();
+        if (!silent) showToast("Module saved.","success");
       } catch(e){ showToast("Save failed: "+e.message,"error"); console.error(e); }
-      finally{ btn.textContent="Save Module";btn.disabled=false; }
+      finally{ if(btn){btn.textContent="Save Module";btn.disabled=false;} }
     };
 
     // ── Save submodule ────────────────────────────────────────────────────────
-    window.saveSubmodule = async function(mi, si) {
+    window.saveSubmodule = async function(mi, si, silent=false) {
       const btn=document.getElementById("save-sub-btn");
-      btn.textContent="Saving...";btn.disabled=true;
+      if (btn) { btn.textContent="Saving..."; btn.disabled=true; }
       const mod=modulesData[mi], sub=mod.submodules[si];
       try {
         sub.order=document.getElementById("sub-order").value.trim();
@@ -834,9 +837,10 @@
 
         sub._new=false;
         renderSidebar();
-        showToast("Sub-module saved.","success");
+        markSaved();
+        if (!silent) showToast("Sub-module saved.","success");
       } catch(e){ showToast("Save failed: "+e.message,"error"); console.error(e); }
-      finally{ btn.textContent="Save Sub-module";btn.disabled=false; }
+      finally{ if(btn){btn.textContent="Save Sub-module";btn.disabled=false;} }
     };
 
     // ── Item drag (videos, questions, content blocks) ─────────────────────────
@@ -1001,6 +1005,62 @@
     window.toggleTrainee=function(uid){const d=document.getElementById(`detail-${uid}`),c=document.getElementById(`chev-${uid}`),h=d.previousElementSibling,o=d.classList.contains("open");d.classList.toggle("open",!o);c.classList.toggle("open",!o);h.classList.toggle("expanded",!o);};
     window.handleSignOff=async function(uid,sk,dk){try{await adminSignOffFn({traineeUid:uid,stepKey:sk,dateKey:dk});const s=await getDoc(doc(db,"certifications",uid));certMap[uid]=s.exists()?s.data():{};const u=await getDoc(doc(db,"users",uid));if(u.data()?.certified){const t=allTrainees.find(t=>t.id===uid);if(t)t.certified=true;showToast(`${t?.name} is Certified!`,"success");}else{showToast("Sign-off recorded.","success");}document.getElementById(`detail-${uid}`).innerHTML=buildDetail(allTrainees.find(t=>t.id===uid),certMap[uid]||{});}catch(e){showToast("Sign-off failed.","error");}};
     window.handleRevoke=async function(uid,sk,dk){if(!confirm("Revoke?"))return;try{await revokeSignOffFn({traineeUid:uid,stepKey:sk,dateKey:dk});const s=await getDoc(doc(db,"certifications",uid));certMap[uid]=s.exists()?s.data():{};const t=allTrainees.find(t=>t.id===uid);if(t)t.certified=false;showToast("Revoked.","info");document.getElementById(`detail-${uid}`).innerHTML=buildDetail(t,certMap[uid]||{});}catch(e){showToast("Failed.","error");}};
+
+    // ── Preview as Trainee ────────────────────────────────────────────────────
+    window.openPreview = function(moduleId) {
+      // Opens modules.html in a new tab with a preview flag
+      window.open(`modules.html?id=${moduleId}&preview=1`, "_blank");
+    };
+
+    // ── Auto-save & unsaved changes tracking ──────────────────────────────────
+    let autoSaveTimer = null;
+    let hasUnsavedChanges = false;
+
+    function markUnsaved() {
+      hasUnsavedChanges = true;
+      const status = document.getElementById("autosave-status");
+      if (status) status.textContent = "Unsaved changes...";
+
+      // Reset the 30-second auto-save timer on every keystroke
+      clearTimeout(autoSaveTimer);
+      autoSaveTimer = setTimeout(async () => {
+        if (activeView === "module" && activeModuleIdx !== null) {
+          const status = document.getElementById("autosave-status");
+          if (status) status.textContent = "Auto-saving...";
+          await saveModule(activeModuleIdx, true); // true = silent (no toast)
+        } else if (activeView === "submodule" && activeModuleIdx !== null && activeSubmoduleIdx !== null) {
+          const status = document.getElementById("autosave-status");
+          if (status) status.textContent = "Auto-saving...";
+          await saveSubmodule(activeModuleIdx, activeSubmoduleIdx, true);
+        }
+      }, 30000); // 30 seconds after last change
+    }
+
+    function markSaved() {
+      hasUnsavedChanges = false;
+      clearTimeout(autoSaveTimer);
+      const status = document.getElementById("autosave-status");
+      if (status) {
+        status.textContent = "✓ Saved";
+        status.style.color = "var(--success)";
+        setTimeout(() => {
+          if (status) { status.textContent = ""; status.style.color = ""; }
+        }, 3000);
+      }
+    }
+
+    // Warn before closing/refreshing with unsaved changes
+    window.addEventListener("beforeunload", e => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    });
+
+    // Patch all input events to trigger markUnsaved
+    // We intercept at the editor panel level so it catches all inputs
+    document.getElementById("editor-panel").addEventListener("input", markUnsaved);
+    document.getElementById("editor-panel").addEventListener("change", markUnsaved);
 
     // ── Resizable sidebar ─────────────────────────────────────────────────────
     (function() {
