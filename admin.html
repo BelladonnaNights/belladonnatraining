@@ -759,14 +759,36 @@
         mod.passingScore=parseInt(document.getElementById("mod-passing").value)||4;
         mod.totalQuestions=parseInt(document.getElementById("mod-total").value)||5;
         mod.order=mi+1;
-        const content=mod.contentBlocks.map(b=>b.text).join("\n\n");
 
-        // Save module order for all modules (in case of reorder)
-        await Promise.all(modulesData.map((m,i)=>setDoc(doc(db,"modules",m.id),{
-          id:m.id,order:i+1,title:m.title||"",description:m.description||"",
-          content:m.contentBlocks?m.contentBlocks.map(b=>b.text).join("\n\n"):"",
-          bannerImage:m.bannerImage||"",passingScore:m.passingScore||4,totalQuestions:m.totalQuestions||5
-        })));
+        // If this is a new module with a timestamp ID, give it a clean ID
+        if (mod._new && mod.id.startsWith("module_") && mod.id.length > 15) {
+          // Generate a clean ID like module_7, module_8 etc
+          const existingNums = modulesData
+            .filter(m=>!m._new)
+            .map(m=>parseInt(m.id.replace("module_","")))
+            .filter(n=>!isNaN(n));
+          const maxNum = existingNums.length ? Math.max(...existingNums) : 0;
+          mod.id = `module_${maxNum + 1}`;
+        }
+
+        // Save this module only (not all modules — avoids overwriting others with bad data)
+        const modContent = (mod.contentBlocks||[]).map(b=>b.text||"").filter(t=>t).join("\n\n");
+        await setDoc(doc(db,"modules",mod.id),{
+          id:mod.id,
+          order:mi+1,
+          title:mod.title||"",
+          description:mod.description||"",
+          content:modContent,
+          bannerImage:mod.bannerImage||"",
+          passingScore:mod.passingScore||4,
+          totalQuestions:mod.totalQuestions||5
+        });
+
+        // Also update the order field on all other modules so ordering persists
+        await Promise.all(modulesData.filter((_,i)=>i!==mi).map((m,_)=>{
+          const idx = modulesData.indexOf(m);
+          return setDoc(doc(db,"modules",m.id),{order:idx+1},{merge:true});
+        }));
 
         // Save videos
         const oldVids=await getDocs(collection(db,"modules",mod.id,"videos"));
@@ -930,38 +952,32 @@
       let qr="";
       for(let i=1;i<=MODULES_COUNT;i++){const mId=`module_${i}`,mp=progressMap[trainee.id]?.[mId];let txt="Not started",c="var(--text3)";if(mp?.status==="passed"){txt=`✓ ${mp.quizScore}/${mp.totalQuestions||5}`;c="var(--success)";}else if(mp?.status==="failed"){txt=`✗ ${mp.quizScore}/${mp.totalQuestions||5}`;c="var(--danger)";}else if(mp?.status==="in_progress"){txt="In progress";c="var(--gold)";}qr+=`<div class="quiz-line"><span style="color:var(--text2);">Module ${i}</span><span style="color:${c};">${txt}</span></div>`;}
 
+      const pwDisplay = trainee.tempPassword
+        ? `<div id="pw-display-${trainee.id}" style="font-family:var(--font);font-size:14px;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;letter-spacing:.08em;margin-bottom:8px;">••••••••</div>`
+        : `<div style="font-size:13px;color:var(--text3);font-family:var(--font);margin-bottom:8px;">No password stored yet.</div>`;
+
       const pwCard = `
         <div class="detail-card">
           <div class="detail-card-label">Login password</div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-            <input type="password" id="pw-${trainee.id}" value="${trainee.tempPassword||""}"
-              readonly
-              style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px;color:var(--text);font-family:var(--font);font-size:13px;flex:1;width:auto;"/>
-            <button class="btn btn-ghost btn-sm" onclick="togglePw('${trainee.id}')">Show</button>
-          </div>
-          ${trainee.tempPassword
-            ? `<p style="font-size:11px;color:var(--text3);font-family:var(--font);font-style:normal;">This is the password you set. If they changed it, this won't reflect the new one.</p>`
-            : `<p style="font-size:11px;color:var(--text3);font-family:var(--font);font-style:normal;">No password stored — this trainee was added before this feature existed.</p>`
-          }
-          <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+          ${pwDisplay}
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${trainee.tempPassword ? `<button class="btn btn-ghost btn-sm" id="pw-btn-${trainee.id}" onclick="togglePw('${trainee.id}','${trainee.tempPassword}')">👁 Show password</button>` : ""}
             <button class="btn btn-ghost btn-sm" onclick="updatePassword('${trainee.id}')">Set new password</button>
           </div>
+          ${trainee.tempPassword ? `<p style="font-size:11px;color:var(--text3);font-family:var(--font);font-style:normal;margin-top:8px;">If they changed their own password, this won't reflect it.</p>` : ""}
         </div>`;
 
       return `<div class="detail-grid"><div class="detail-card"><div class="detail-card-label">Quiz Progress</div>${qr}</div>${pwCard}${SIGNOFF_STEPS.map(step=>{const done=cert[step.key],dv=cert[step.dateKey];const ds=dv?new Date(dv.seconds*1000).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"";return `<div class="detail-card"><div class="detail-card-label">${step.label}</div>${done?`<div class="badge badge-pass" style="margin-bottom:10px;display:block;">✓${ds?" · "+ds:""}</div><button class="btn btn-ghost btn-sm" onclick="handleRevoke('${trainee.id}','${step.key}','${step.dateKey}')">Revoke</button>`:`<div class="badge badge-locked" style="margin-bottom:10px;display:block;">Pending</div><button class="btn btn-primary btn-sm" onclick="handleSignOff('${trainee.id}','${step.key}','${step.dateKey}')">Sign Off ✓</button>`}</div>`;}).join("")}</div>`;
     }
 
-    window.togglePw = function(uid) {
-      const input = document.getElementById(`pw-${uid}`);
-      const btn = input?.nextElementSibling;
-      if (!input) return;
-      if (input.type === "password") {
-        input.type = "text";
-        if (btn) btn.textContent = "Hide";
-      } else {
-        input.type = "password";
-        if (btn) btn.textContent = "Show";
-      }
+    window.togglePw = function(uid, pw) {
+      const display = document.getElementById(`pw-display-${uid}`);
+      const btn = document.getElementById(`pw-btn-${uid}`);
+      if (!display) return;
+      const isHidden = display.textContent === "••••••••";
+      display.textContent = isHidden ? pw : "••••••••";
+      display.style.letterSpacing = isHidden ? "normal" : ".08em";
+      if (btn) btn.textContent = isHidden ? "🙈 Hide password" : "👁 Show password";
     };
 
     window.updatePassword = async function(uid) {
