@@ -6,57 +6,53 @@
   <title>Belladonna Training — Sign in</title>
   <link rel="stylesheet" href="style.css"/>
   <style>
-    .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
-    .login-box { width: 100%; max-width: 400px; }
-    .login-brand { text-align: center; margin-bottom: 2rem; }
-    .login-logo { width: 52px; height: 52px; border-radius: 50%; background: var(--brand); margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; }
-    .login-logo svg { width: 24px; height: 24px; }
-    .login-tagline { font-size: 14px; color: var(--ink-3); margin-top: 4px; }
-    .form-group { margin-bottom: 1rem; }
-    .login-footer { text-align: center; margin-top: 1.5rem; font-size: 13px; color: var(--ink-3); }
+    .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;background:var(--bg);}
+    .login-box{width:100%;max-width:400px;}
+    .form-group{margin-bottom:1rem;}
   </style>
 </head>
 <body>
   <div class="login-wrap">
     <div class="login-box fade-up">
-
       <div class="login-brand">
-        <div class="login-logo">
-          <svg viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="8" r="4" fill="white"/>
-            <path d="M4 20c0-4.418 3.582-8 8-8s8 3.582 8 8" stroke="white" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </div>
-        <h1 style="font-size:1.8rem;">Belladonna</h1>
-        <p class="login-tagline">Host Training Portal</p>
+        <img src="logo.png" class="login-logo" onerror="this.style.display='none'" alt="Belladonna"/>
+        <div class="login-title">BELLADONNA</div>
+        <div class="login-sub">Host Training Portal</div>
       </div>
 
-      <div class="card">
+      <div class="card" style="margin-top:1.5rem;">
         <div class="form-group">
-          <label for="email">Email</label>
+          <label>Email</label>
           <input type="email" id="email" placeholder="you@belladonna.com" autocomplete="email"/>
         </div>
         <div class="form-group">
-          <label for="password">Password</label>
+          <label>Password</label>
           <input type="password" id="password" placeholder="••••••••" autocomplete="current-password"/>
         </div>
         <div id="error-msg" style="display:none;" class="error-msg mt-1"></div>
         <button class="btn btn-primary btn-lg btn-full mt-2" id="login-btn" onclick="handleLogin()">
-          Sign in
+          Sign In
         </button>
       </div>
 
-      <p class="login-footer">Contact your manager if you need access.</p>
+      <p style="text-align:center;margin-top:1.5rem;font-family:var(--cinzel);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);">
+        Contact your manager if you need access.
+      </p>
     </div>
   </div>
 
   <script type="module">
-    import { doLogin, auth, db } from "./firebase-init.js";
-    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { auth, db } from "./firebase-init.js";
+    import { onAuthStateChanged, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // Already logged in? Redirect
-    onAuthStateChanged(auth, user => {
-      if (user) window.location.href = "dashboard.html";
+    // Already logged in? Redirect to correct page
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        const profile = snap.exists() ? snap.data() : {};
+        window.location.href = profile.role === "admin" ? "admin.html" : "dashboard.html";
+      }
     });
 
     window.handleLogin = async function() {
@@ -76,17 +72,18 @@
       err.style.display = "none";
 
       try {
-        await doLogin(email, password);
-        window.location.href = "dashboard.html";
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        const snap = await getDoc(doc(db, "users", cred.user.uid));
+        const profile = snap.exists() ? snap.data() : {};
+        window.location.href = profile.role === "admin" ? "admin.html" : "dashboard.html";
       } catch (e) {
         err.textContent = "Invalid email or password.";
         err.style.display = "block";
-        btn.textContent = "Sign in";
+        btn.textContent = "Sign In";
         btn.disabled = false;
       }
     };
 
-    // Allow Enter key to submit
     document.getElementById("password").addEventListener("keydown", e => {
       if (e.key === "Enter") window.handleLogin();
     });
