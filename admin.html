@@ -271,6 +271,21 @@
           return ssData;
         }));
         sub.contentBlocks=(sub.content||"").split("\n\n").filter(b=>b.trim()).map((b,i)=>({tempId:`sb${i}`,text:b.trim()}));
+        // Rebuild unified blocks in saved order if available
+        if (sub.blocksOrder && sub.blocksOrder.length) {
+          const tBlocks=sub.contentBlocks.map(b=>({type:"text",tempId:`t${Math.random()}`,text:b.text}));
+          const iBlocks=sub.images.map(img=>({type:"image",tempId:`i${Math.random()}`,url:img.url||"",caption:img.caption||""}));
+          const vBlocks=sub.videos.map(vid=>({type:"video",tempId:`v${Math.random()}`,title:vid.title||"",youtubeId:vid.youtubeId||""}));
+          let ti=0,ii=0,vi=0;
+          sub.blocks=sub.blocksOrder.map(bo=>{
+            if(bo.type==="text")return tBlocks[ti++];
+            if(bo.type==="image")return iBlocks[ii++];
+            if(bo.type==="video")return vBlocks[vi++];
+            return null;
+          }).filter(Boolean);
+        } else {
+          sub.blocks=null; // initSubBlocks will build it from separate arrays on first open
+        }
         return sub;
       }));
     }
@@ -298,8 +313,15 @@
             <button class="cs-icon-btn" title="Add sub-module" onclick="event.stopPropagation();addSubmodule(${mi})">+</button>
             <button class="cs-icon-btn del" title="Delete module" onclick="event.stopPropagation();deleteModule(${mi})">✕</button>
           </span>
-          <span class="cs-chevron ${mod._open?"open":""}" id="cs-chev-${mi}">▾</span>`;
-        row.addEventListener("click", ()=>selectModule(mi));
+          <span class="cs-chevron ${mod._open?"open":""}" id="cs-chev-${mi}" title="Expand/collapse">▾</span>`;
+        // Title click = select/edit. Chevron click = toggle open independently.
+        row.addEventListener("click", (e) => {
+          if (e.target.classList.contains("cs-chevron")) {
+            toggleModuleOpen(mi);
+          } else {
+            selectModule(mi);
+          }
+        });
         addSidebarDrag(row, mi);
         modDiv.appendChild(row);
 
@@ -359,27 +381,50 @@
 
     // ── Select module / submodule ─────────────────────────────────────────────
     function selectModule(mi) {
-      // Toggle open/close
-      if (activeView==="module" && activeModuleIdx===mi) {
-        modulesData[mi]._open = !modulesData[mi]._open;
-        renderSidebar();
-        return;
-      }
-      // Close previously open
-      if (activeModuleIdx!==null && activeModuleIdx!==mi) modulesData[activeModuleIdx]._open=false;
+      // Selecting a module opens it but never closes others
       activeModuleIdx = mi;
       activeSubmoduleIdx = null;
       activeView = "module";
-      modulesData[mi]._open = true;
+      if (!modulesData[mi]._open) {
+        modulesData[mi]._open = true;
+      }
       renderSidebar();
       renderModuleEditor(mi);
+    }
+
+    // Chevron click — toggle open/close independently, never affects others
+    function toggleModuleOpen(mi) {
+      modulesData[mi]._open = !modulesData[mi]._open;
+      // Just update the chevron and sublist DOM directly — no full re-render
+      const chev = document.getElementById(`cs-chev-${mi}`);
+      const sublist = document.getElementById(`cs-sublist-${mi}`);
+      if (chev) chev.classList.toggle("open", modulesData[mi]._open);
+      if (sublist) sublist.classList.toggle("open", modulesData[mi]._open);
     }
 
     window.selectSubmodule = function(mi, si) {
       activeModuleIdx = mi;
       activeSubmoduleIdx = si;
       activeView = "submodule";
-      renderSidebar();
+      // Update active classes without re-rendering the whole sidebar
+      document.querySelectorAll(".cs-mod-row").forEach(r => r.classList.remove("active"));
+      document.querySelectorAll(".cs-title").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".cs-sub-row").forEach(r => r.classList.remove("active"));
+      document.querySelectorAll(".cs-sub-dot").forEach(d => d.classList.remove("active"));
+      document.querySelectorAll(".cs-sub-title").forEach(t => t.classList.remove("active"));
+      // Mark the parent module row as active
+      const modRow = document.querySelector(`[data-mi="${mi}"] .cs-mod-row`);
+      if (modRow) modRow.classList.add("active");
+      // Mark the submodule row active — it's the (si)th cs-sub-row inside cs-sublist-mi
+      const subList = document.getElementById(`cs-sublist-${mi}`);
+      if (subList) {
+        const subRows = subList.querySelectorAll(".cs-sub-row");
+        if (subRows[si]) {
+          subRows[si].classList.add("active");
+          subRows[si].querySelector(".cs-sub-dot")?.classList.add("active");
+          subRows[si].querySelector(".cs-sub-title")?.classList.add("active");
+        }
+      }
       renderSubmoduleEditor(mi, si);
     };
 
@@ -658,26 +703,17 @@
         </div>
 
         <div class="editor-section">
-          <div class="editor-section-header"><span class="editor-section-title">Content</span><span style="font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic;">Use ![caption](url) to embed images inline</span></div>
-          <div class="editor-section-body">
-            <div id="sub-content-list"></div>
-            <button class="add-item-btn" id="add-sub-content-btn">+ Add Content Section</button>
+          <div class="editor-section-header">
+            <span class="editor-section-title">Content Blocks</span>
+            <span style="font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic;">Drag ⠿ to reorder — mix text, images, and videos freely</span>
           </div>
-        </div>
-
-        <div class="editor-section">
-          <div class="editor-section-header"><span class="editor-section-title">Images</span></div>
           <div class="editor-section-body">
-            <div id="sub-images-list"></div>
-            <button class="add-item-btn" id="add-sub-image-btn">+ Add Image</button>
-          </div>
-        </div>
-
-        <div class="editor-section">
-          <div class="editor-section-header"><span class="editor-section-title">Videos</span></div>
-          <div class="editor-section-body">
-            <div id="sub-videos-list"></div>
-            <button class="add-item-btn" id="add-sub-video-btn">+ Add Video</button>
+            <div id="sub-blocks-list"></div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+              <button class="add-item-btn" id="add-sub-text-btn" style="flex:1;min-width:120px;">+ Text</button>
+              <button class="add-item-btn" id="add-sub-image-btn" style="flex:1;min-width:120px;">+ Image</button>
+              <button class="add-item-btn" id="add-sub-video-btn" style="flex:1;min-width:120px;">+ Video</button>
+            </div>
           </div>
         </div>
 
@@ -697,14 +733,14 @@
         prev.style.display=this.value?"block":"none";
         prev.innerHTML=this.value?`<div class="img-preview"><img src="${this.value}"/></div>`:"";
       });
-      document.getElementById("add-sub-content-btn").onclick=()=>{ if(!sub.contentBlocks)sub.contentBlocks=[]; sub.contentBlocks.push({tempId:`sc${Date.now()}`,text:""}); renderSubContentList(mi,si); };
-      document.getElementById("add-sub-image-btn").onclick=()=>{ if(!sub.images)sub.images=[]; sub.images.push({tempId:`si${Date.now()}`,url:"",caption:"",order:sub.images.length+1}); renderSubImagesList(mi,si); };
-      document.getElementById("add-sub-video-btn").onclick=()=>{ if(!sub.videos)sub.videos=[]; sub.videos.push({tempId:`sv${Date.now()}`,title:"",youtubeId:"",order:sub.videos.length+1}); renderSubVideosList(mi,si); };
+      document.getElementById("add-sub-text-btn").onclick=()=>{ addSubBlock(mi,si,"text"); };
+      document.getElementById("add-sub-image-btn").onclick=()=>{ addSubBlock(mi,si,"image"); };
+      document.getElementById("add-sub-video-btn").onclick=()=>{ addSubBlock(mi,si,"video"); };
       document.getElementById("add-subsection-btn").onclick=()=>{ if(!sub.subsections)sub.subsections=[]; sub.subsections.push({id:`ss_${Date.now()}`,title:"New Section",description:"",order:`${mi+1}.${si+1}${String.fromCharCode(65+sub.subsections.length)}`,content:"",bannerImage:"",contentBlocks:[],videos:[],images:[],_new:true}); renderSubsectionsList(mi,si); };
 
-      renderSubContentList(mi,si);
-      renderSubImagesList(mi,si);
-      renderSubVideosList(mi,si);
+      // Merge existing separate arrays into unified blocks on first load
+      initSubBlocks(mi, si);
+      renderSubBlocks(mi, si);
       renderSubsectionsList(mi,si);
     }
 
@@ -782,67 +818,134 @@
       renderSidebar();
     };
 
-    function renderSubContentList(mi,si){
-      const list=document.getElementById("sub-content-list");if(!list)return;
-      list.innerHTML="";
-      const sub=modulesData[mi].submodules[si];
-      const blocks=sub.contentBlocks||[];
-      if(!blocks.length){list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No content yet.</p>`;return;}
-      blocks.forEach((block,bi)=>{
-        const div=document.createElement("div");div.className="item-card";
-        const ta=makeEl("textarea","Write content...",block.text||"",e=>blocks[bi].text=e.target.value,"textarea-std");
-        const del=document.createElement("button");del.className="delete-btn";del.textContent="✕";del.onclick=()=>{if(confirm("Delete?"))blocks.splice(bi,1),renderSubContentList(mi,si);};
-        const fields=document.createElement("div");fields.className="item-fields";fields.appendChild(ta);
-        div.appendChild(fields);div.appendChild(del);list.appendChild(div);
+    // ── Unified sub-module blocks (text + image + video mixed, draggable) ────────
+    function initSubBlocks(mi, si) {
+      const sub = modulesData[mi].submodules[si];
+      // If already has unified blocks array, use it
+      if (sub.blocks) return;
+      // Build unified blocks from separate arrays (for backwards compat)
+      const blocks = [];
+      (sub.contentBlocks||[]).forEach(b => blocks.push({type:"text", tempId:`t${Date.now()}${Math.random()}`, text:b.text||""}));
+      (sub.images||[]).forEach(img => blocks.push({type:"image", tempId:`i${Date.now()}${Math.random()}`, url:img.url||"", caption:img.caption||""}));
+      (sub.videos||[]).forEach(vid => blocks.push({type:"video", tempId:`v${Date.now()}${Math.random()}`, title:vid.title||"", youtubeId:vid.youtubeId||""}));
+      sub.blocks = blocks;
+    }
+
+    function addSubBlock(mi, si, type) {
+      const sub = modulesData[mi].submodules[si];
+      if (!sub.blocks) initSubBlocks(mi, si);
+      if (type==="text")  sub.blocks.push({type:"text",  tempId:`t${Date.now()}`, text:""});
+      if (type==="image") sub.blocks.push({type:"image", tempId:`i${Date.now()}`, url:"", caption:""});
+      if (type==="video") sub.blocks.push({type:"video", tempId:`v${Date.now()}`, title:"", youtubeId:""});
+      renderSubBlocks(mi, si);
+      // Scroll to bottom of list
+      setTimeout(()=>{ const l=document.getElementById("sub-blocks-list"); if(l) l.lastElementChild?.scrollIntoView({behavior:"smooth"}); }, 50);
+    }
+
+    let subBlockDragSrc = null;
+
+    function renderSubBlocks(mi, si) {
+      const list = document.getElementById("sub-blocks-list"); if(!list) return;
+      list.innerHTML = "";
+      const sub = modulesData[mi].submodules[si];
+      const blocks = sub.blocks || [];
+
+      if (!blocks.length) {
+        list.innerHTML = `<p style="color:var(--text3);font-size:13px;margin-bottom:8px;font-family:var(--font);">No content yet — add text, images, or videos below.</p>`;
+        return;
+      }
+
+      blocks.forEach((block, bi) => {
+        const div = document.createElement("div");
+        div.className = "item-card";
+        div.draggable = true;
+        div.dataset.bi = bi;
+        div.style.cssText = "flex-direction:column;gap:8px;";
+
+        // Type label + drag handle + delete
+        const header = document.createElement("div");
+        header.style.cssText = "display:flex;align-items:center;gap:8px;";
+        const handle = document.createElement("div");
+        handle.className = "drag-handle"; handle.textContent = "⠿"; handle.title = "Drag to reorder";
+        const typeTag = document.createElement("span");
+        typeTag.style.cssText = "font-family:var(--cinzel);font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:4px;flex-shrink:0;";
+        const delBtn = document.createElement("button");
+        delBtn.className = "delete-btn"; delBtn.textContent = "✕";
+        delBtn.onclick = () => { if(confirm("Delete this block?")) { blocks.splice(bi,1); renderSubBlocks(mi,si); } };
+
+        if (block.type === "text") {
+          typeTag.textContent = "Text";
+          typeTag.style.background = "var(--surface3)";
+          typeTag.style.color = "var(--text3)";
+          header.appendChild(handle); header.appendChild(typeTag);
+          const spacer = document.createElement("div"); spacer.style.flex="1";
+          header.appendChild(spacer); header.appendChild(delBtn);
+          div.appendChild(header);
+          const ta = makeEl("textarea","Write content here...",block.text||"",e=>blocks[bi].text=e.target.value,"textarea-std");
+          ta.style.minHeight="80px";
+          div.appendChild(ta);
+        }
+
+        else if (block.type === "image") {
+          typeTag.textContent = "Image";
+          typeTag.style.background = "#1a2a1a";
+          typeTag.style.color = "#6abf6a";
+          header.appendChild(handle); header.appendChild(typeTag);
+          const spacer = document.createElement("div"); spacer.style.flex="1";
+          header.appendChild(spacer); header.appendChild(delBtn);
+          div.appendChild(header);
+          const urlIn = makeEl("input","Image URL (https://...)",block.url||"",e=>{
+            blocks[bi].url=e.target.value;
+            let prev=div.querySelector(".img-preview");
+            if(e.target.value){if(!prev){prev=document.createElement("div");prev.className="img-preview";div.appendChild(prev);}prev.innerHTML=`<img src="${e.target.value}"/>`;}
+            else if(prev){prev.remove();}
+          },"input-std");
+          const capIn = makeEl("input","Caption (optional)",block.caption||"",e=>blocks[bi].caption=e.target.value,"input-std");
+          div.appendChild(urlIn); div.appendChild(capIn);
+          if(block.url){const prev=document.createElement("div");prev.className="img-preview";prev.innerHTML=`<img src="${block.url}"/>`;div.appendChild(prev);}
+        }
+
+        else if (block.type === "video") {
+          typeTag.textContent = "Video";
+          typeTag.style.background = "#1a1a2a";
+          typeTag.style.color = "#6a8abf";
+          header.appendChild(handle); header.appendChild(typeTag);
+          const spacer = document.createElement("div"); spacer.style.flex="1";
+          header.appendChild(spacer); header.appendChild(delBtn);
+          div.appendChild(header);
+          const titleIn = makeEl("input","Video title",block.title||"",e=>blocks[bi].title=e.target.value,"input-std");
+          const urlIn = makeEl("input","YouTube URL or video ID",block.youtubeId||"",e=>{
+            let val=e.target.value.trim(); const m2=val.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/); if(m2)val=m2[1];
+            blocks[bi].youtubeId=val;
+            let prev=div.querySelector(".youtube-preview");
+            if(val.length>=11){if(!prev){prev=document.createElement("div");prev.className="youtube-preview";div.appendChild(prev);}prev.innerHTML=`<iframe src="https://www.youtube.com/embed/${val}?rel=0" allowfullscreen></iframe>`;}
+            else if(prev){prev.remove();}
+          },"input-std");
+          div.appendChild(titleIn); div.appendChild(urlIn);
+          if(block.youtubeId){const prev=document.createElement("div");prev.className="youtube-preview";prev.innerHTML=`<iframe src="https://www.youtube.com/embed/${block.youtubeId}?rel=0" allowfullscreen></iframe>`;div.appendChild(prev);}
+        }
+
+        // Drag events
+        div.addEventListener("dragstart", e=>{ subBlockDragSrc=div; div.style.opacity="0.4"; e.dataTransfer.effectAllowed="move"; });
+        div.addEventListener("dragend", ()=>{ div.style.opacity="1"; subBlockDragSrc=null; });
+        div.addEventListener("dragover", e=>{ e.preventDefault(); div.style.outline="1px solid var(--gold-border)"; });
+        div.addEventListener("dragleave", ()=>{ div.style.outline=""; });
+        div.addEventListener("drop", e=>{
+          e.preventDefault(); div.style.outline="";
+          if(!subBlockDragSrc||subBlockDragSrc===div)return;
+          const fromIdx=parseInt(subBlockDragSrc.dataset.bi), toIdx=parseInt(div.dataset.bi);
+          const item=blocks.splice(fromIdx,1)[0]; blocks.splice(toIdx,0,item);
+          renderSubBlocks(mi,si);
+        });
+
+        list.appendChild(div);
       });
     }
 
-    function renderSubImagesList(mi,si){
-      const list=document.getElementById("sub-images-list");if(!list)return;
-      list.innerHTML="";
-      const sub=modulesData[mi].submodules[si];
-      const images=sub.images||[];
-      if(!images.length){list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No images yet.</p>`;return;}
-      images.forEach((img,ii)=>{
-        const div=document.createElement("div");div.className="item-card";
-        const fields=document.createElement("div");fields.className="item-fields";
-        const urlIn=makeEl("input","Image URL (https://...)",img.url||"",e=>{
-          images[ii].url=e.target.value;
-          let prev=fields.querySelector(".img-preview");
-          if(e.target.value){if(!prev){prev=document.createElement("div");prev.className="img-preview";fields.appendChild(prev);}prev.innerHTML=`<img src="${e.target.value}"/>`;}
-          else if(prev){prev.remove();}
-        },"input-std");
-        const capIn=makeEl("input","Caption (optional)",img.caption||"",e=>images[ii].caption=e.target.value,"input-std");
-        fields.appendChild(urlIn);fields.appendChild(capIn);
-        if(img.url){const prev=document.createElement("div");prev.className="img-preview";prev.innerHTML=`<img src="${img.url}"/>`;fields.appendChild(prev);}
-        const del=document.createElement("button");del.className="delete-btn";del.textContent="✕";del.onclick=()=>{if(confirm("Delete?"))images.splice(ii,1),renderSubImagesList(mi,si);};
-        div.appendChild(fields);div.appendChild(del);list.appendChild(div);
-      });
-    }
-
-    function renderSubVideosList(mi,si){
-      const list=document.getElementById("sub-videos-list");if(!list)return;
-      list.innerHTML="";
-      const sub=modulesData[mi].submodules[si];
-      const videos=sub.videos||[];
-      if(!videos.length){list.innerHTML=`<p style="color:var(--text3);font-size:13px;margin-bottom:8px;">No videos yet.</p>`;return;}
-      videos.forEach((vid,vi)=>{
-        const div=document.createElement("div");div.className="item-card";
-        const fields=document.createElement("div");fields.className="item-fields";
-        const titleIn=makeEl("input","Video title",vid.title||"",e=>videos[vi].title=e.target.value,"input-std");
-        const urlIn=makeEl("input","YouTube URL or video ID",vid.youtubeId||"",e=>{
-          let val=e.target.value.trim();const m2=val.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);if(m2)val=m2[1];
-          videos[vi].youtubeId=val;
-          let prev=fields.querySelector(".youtube-preview");
-          if(val.length>=11){if(!prev){prev=document.createElement("div");prev.className="youtube-preview";fields.appendChild(prev);}prev.innerHTML=`<iframe src="https://www.youtube.com/embed/${val}?rel=0" allowfullscreen></iframe>`;}
-          else if(prev){prev.remove();}
-        },"input-std");
-        fields.appendChild(titleIn);fields.appendChild(urlIn);
-        if(vid.youtubeId){const prev=document.createElement("div");prev.className="youtube-preview";prev.innerHTML=`<iframe src="https://www.youtube.com/embed/${vid.youtubeId}?rel=0" allowfullscreen></iframe>`;fields.appendChild(prev);}
-        const del=document.createElement("button");del.className="delete-btn";del.textContent="✕";del.onclick=()=>{if(confirm("Delete?"))videos.splice(vi,1),renderSubVideosList(mi,si);};
-        div.appendChild(fields);div.appendChild(del);list.appendChild(div);
-      });
-    }
+    // Keep old functions as stubs so nothing breaks if called elsewhere
+    function renderSubContentList(mi,si){ renderSubBlocks(mi,si); }
+    function renderSubImagesList(mi,si){ renderSubBlocks(mi,si); }
+    function renderSubVideosList(mi,si){ renderSubBlocks(mi,si); }
 
     // ── Save module ───────────────────────────────────────────────────────────
     window.saveModule = async function(mi, silent=false) {
@@ -915,20 +1018,30 @@
         sub.title=document.getElementById("sub-title").value.trim();
         sub.description=document.getElementById("sub-desc").value.trim();
         sub.bannerImage=document.getElementById("sub-banner").value.trim();
-        const content=(sub.contentBlocks||[]).map(b=>b.text).join("\n\n");
+
+        // Serialize unified blocks back into separate arrays for Firestore + trainee page
+        const blocks = sub.blocks || [];
+        const textBlocks = blocks.filter(b=>b.type==="text");
+        const imageBlocks = blocks.filter(b=>b.type==="image");
+        const videoBlocks = blocks.filter(b=>b.type==="video");
+        const content = textBlocks.map(b=>b.text||"").filter(t=>t).join("\n\n");
+
+        // Also store the unified blocks order as a separate field so we can restore on reload
+        const blocksOrder = blocks.map((b,i)=>({type:b.type,order:i,ref:b.tempId||""}));
 
         await setDoc(doc(db,"modules",mod.id,"submodules",sub.id),{
-          id:sub.id,order:sub.order||`${mi+1}.${si+1}`,title:sub.title||"",
-          description:sub.description||"",content,bannerImage:sub.bannerImage||""
+          id:sub.id, order:sub.order||`${mi+1}.${si+1}`, title:sub.title||"",
+          description:sub.description||"", content, bannerImage:sub.bannerImage||"",
+          blocksOrder
         });
 
         const oldSV=await getDocs(collection(db,"modules",mod.id,"submodules",sub.id,"videos"));
         await Promise.all(oldSV.docs.map(d=>deleteDoc(d.ref)));
-        await Promise.all((sub.videos||[]).map((v,i)=>setDoc(doc(db,"modules",mod.id,"submodules",sub.id,"videos",v.id||`sv_${i+1}`),{id:v.id||`sv_${i+1}`,order:i+1,title:v.title||"",youtubeId:v.youtubeId||""})));
+        await Promise.all(videoBlocks.map((v,i)=>setDoc(doc(db,"modules",mod.id,"submodules",sub.id,"videos",`sv_${i+1}`),{id:`sv_${i+1}`,order:i+1,title:v.title||"",youtubeId:v.youtubeId||""})));
 
         const oldSI=await getDocs(collection(db,"modules",mod.id,"submodules",sub.id,"images"));
         await Promise.all(oldSI.docs.map(d=>deleteDoc(d.ref)));
-        await Promise.all((sub.images||[]).map((img,i)=>setDoc(doc(db,"modules",mod.id,"submodules",sub.id,"images",img.id||`img_${i+1}`),{id:img.id||`img_${i+1}`,order:i+1,url:img.url||"",caption:img.caption||""})));
+        await Promise.all(imageBlocks.map((img,i)=>setDoc(doc(db,"modules",mod.id,"submodules",sub.id,"images",`img_${i+1}`),{id:`img_${i+1}`,order:i+1,url:img.url||"",caption:img.caption||""})));
 
         // Save subsections (sub-sub-modules)
         const oldSS=await getDocs(collection(db,"modules",mod.id,"submodules",sub.id,"subsections"));
@@ -1171,10 +1284,13 @@
       }
     });
 
-    // Patch all input events to trigger markUnsaved
-    // We intercept at the editor panel level so it catches all inputs
-    document.getElementById("editor-panel").addEventListener("input", markUnsaved);
-    document.getElementById("editor-panel").addEventListener("change", markUnsaved);
+    // Use document-level event delegation so listeners survive editor panel re-renders
+    document.addEventListener("input", e => {
+      if (e.target.closest("#editor-panel")) markUnsaved();
+    });
+    document.addEventListener("change", e => {
+      if (e.target.closest("#editor-panel")) markUnsaved();
+    });
 
     // ── Resizable sidebar ─────────────────────────────────────────────────────
     (function() {
