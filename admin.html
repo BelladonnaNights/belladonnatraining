@@ -859,11 +859,13 @@
       btn.textContent="Adding...";btn.disabled=true;
       try {
         const result=await createTrainee(email,password,name);
+        // Store temp password in Firestore so admin can look it up
+        await setDoc(doc(db,"users",result.uid),{tempPassword:password},{merge:true});
         showToast(`${name} added!`,"success");
         document.getElementById("new-name").value="";
         document.getElementById("new-email").value="";
         document.getElementById("new-password").value="";
-        allTrainees.push({id:result.uid,name,email,role:"trainee",certified:false});
+        allTrainees.push({id:result.uid,name,email,role:"trainee",certified:false,tempPassword:password});
         progressMap[result.uid]={};certMap[result.uid]={};
         renderStats();renderTrainees();
       } catch(e){
@@ -927,8 +929,58 @@
     function buildDetail(trainee,cert){
       let qr="";
       for(let i=1;i<=MODULES_COUNT;i++){const mId=`module_${i}`,mp=progressMap[trainee.id]?.[mId];let txt="Not started",c="var(--text3)";if(mp?.status==="passed"){txt=`✓ ${mp.quizScore}/${mp.totalQuestions||5}`;c="var(--success)";}else if(mp?.status==="failed"){txt=`✗ ${mp.quizScore}/${mp.totalQuestions||5}`;c="var(--danger)";}else if(mp?.status==="in_progress"){txt="In progress";c="var(--gold)";}qr+=`<div class="quiz-line"><span style="color:var(--text2);">Module ${i}</span><span style="color:${c};">${txt}</span></div>`;}
-      return `<div class="detail-grid"><div class="detail-card"><div class="detail-card-label">Quiz Progress</div>${qr}</div>${SIGNOFF_STEPS.map(step=>{const done=cert[step.key],dv=cert[step.dateKey];const ds=dv?new Date(dv.seconds*1000).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"";return `<div class="detail-card"><div class="detail-card-label">${step.label}</div>${done?`<div class="badge badge-pass" style="margin-bottom:10px;display:block;">✓${ds?" · "+ds:""}</div><button class="btn btn-ghost btn-sm" onclick="handleRevoke('${trainee.id}','${step.key}','${step.dateKey}')">Revoke</button>`:`<div class="badge badge-locked" style="margin-bottom:10px;display:block;">Pending</div><button class="btn btn-primary btn-sm" onclick="handleSignOff('${trainee.id}','${step.key}','${step.dateKey}')">Sign Off ✓</button>`}</div>`;}).join("")}</div>`;
+
+      const pwCard = `
+        <div class="detail-card">
+          <div class="detail-card-label">Login password</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <input type="password" id="pw-${trainee.id}" value="${trainee.tempPassword||""}"
+              readonly
+              style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px;color:var(--text);font-family:var(--font);font-size:13px;flex:1;width:auto;"/>
+            <button class="btn btn-ghost btn-sm" onclick="togglePw('${trainee.id}')">Show</button>
+          </div>
+          ${trainee.tempPassword
+            ? `<p style="font-size:11px;color:var(--text3);font-family:var(--font);font-style:normal;">This is the password you set. If they changed it, this won't reflect the new one.</p>`
+            : `<p style="font-size:11px;color:var(--text3);font-family:var(--font);font-style:normal;">No password stored — this trainee was added before this feature existed.</p>`
+          }
+          <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" onclick="updatePassword('${trainee.id}')">Set new password</button>
+          </div>
+        </div>`;
+
+      return `<div class="detail-grid"><div class="detail-card"><div class="detail-card-label">Quiz Progress</div>${qr}</div>${pwCard}${SIGNOFF_STEPS.map(step=>{const done=cert[step.key],dv=cert[step.dateKey];const ds=dv?new Date(dv.seconds*1000).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"";return `<div class="detail-card"><div class="detail-card-label">${step.label}</div>${done?`<div class="badge badge-pass" style="margin-bottom:10px;display:block;">✓${ds?" · "+ds:""}</div><button class="btn btn-ghost btn-sm" onclick="handleRevoke('${trainee.id}','${step.key}','${step.dateKey}')">Revoke</button>`:`<div class="badge badge-locked" style="margin-bottom:10px;display:block;">Pending</div><button class="btn btn-primary btn-sm" onclick="handleSignOff('${trainee.id}','${step.key}','${step.dateKey}')">Sign Off ✓</button>`}</div>`;}).join("")}</div>`;
     }
+
+    window.togglePw = function(uid) {
+      const input = document.getElementById(`pw-${uid}`);
+      const btn = input?.nextElementSibling;
+      if (!input) return;
+      if (input.type === "password") {
+        input.type = "text";
+        if (btn) btn.textContent = "Hide";
+      } else {
+        input.type = "password";
+        if (btn) btn.textContent = "Show";
+      }
+    };
+
+    window.updatePassword = async function(uid) {
+      const newPw = prompt("Enter a new password for this trainee (min 6 characters):");
+      if (!newPw) return;
+      if (newPw.length < 6) { alert("Password must be at least 6 characters."); return; }
+      try {
+        // Save to Firestore so admin can see it
+        await setDoc(doc(db,"users",uid),{tempPassword:newPw},{merge:true});
+        // Update local
+        const t = allTrainees.find(t=>t.id===uid);
+        if (t) t.tempPassword = newPw;
+        showToast("Password updated in records. Note: this does NOT change their Firebase Auth password — they'll need to use this to log in only if you also reset it in Firebase Auth console.","info");
+        // Refresh detail view
+        document.getElementById(`detail-${uid}`).innerHTML = buildDetail(t, certMap[uid]||{});
+      } catch(e) {
+        showToast("Failed to save password.","error");
+      }
+    };
 
     window.toggleTrainee=function(uid){const d=document.getElementById(`detail-${uid}`),c=document.getElementById(`chev-${uid}`),h=d.previousElementSibling,o=d.classList.contains("open");d.classList.toggle("open",!o);c.classList.toggle("open",!o);h.classList.toggle("expanded",!o);};
     window.handleSignOff=async function(uid,sk,dk){try{await adminSignOffFn({traineeUid:uid,stepKey:sk,dateKey:dk});const s=await getDoc(doc(db,"certifications",uid));certMap[uid]=s.exists()?s.data():{};const u=await getDoc(doc(db,"users",uid));if(u.data()?.certified){const t=allTrainees.find(t=>t.id===uid);if(t)t.certified=true;showToast(`${t?.name} is Certified!`,"success");}else{showToast("Sign-off recorded.","success");}document.getElementById(`detail-${uid}`).innerHTML=buildDetail(allTrainees.find(t=>t.id===uid),certMap[uid]||{});}catch(e){showToast("Sign-off failed.","error");}};
