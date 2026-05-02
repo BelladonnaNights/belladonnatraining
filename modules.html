@@ -32,8 +32,17 @@
     .mod-chevron { font-size:10px; color:var(--text3); transition:transform .18s; flex-shrink:0; }
     .mod-chevron.open { transform:rotate(180deg); }
 
-    /* Sub-module items */
-    .submod-list { display:none; background:var(--bg); }
+    /* Sub-sub-module items */
+    .subsub-list { display:none; background:var(--bg); }
+    .subsub-list.open { display:block; }
+    .subsub-item { display:flex; align-items:center; gap:6px; padding:6px 12px 6px 60px; cursor:pointer; transition:background .15s; border-bottom:1px solid var(--border); }
+    .subsub-item:last-child { border-bottom:none; }
+    .subsub-item:hover { background:var(--surface2); }
+    .subsub-item.active { background:var(--surface2); border-left:2px solid var(--gold-border); }
+    .subsub-dash { width:10px; height:1px; background:var(--text3); flex-shrink:0; }
+    .subsub-dash.active { background:var(--gold); }
+    .subsub-label { font-family:var(--font); font-size:11px; color:var(--text3); flex:1; line-height:1.3; }
+    .subsub-label.active { color:var(--text2); }
     .submod-list.open { display:block; }
     .submod-item { display:flex; align-items:center; gap:8px; padding:8px 12px 8px 44px; cursor:pointer; transition:background .15s; border-bottom:1px solid var(--border); }
     .submod-item:last-child { border-bottom:none; }
@@ -183,6 +192,9 @@
       document.getElementById("overall-prog-label").textContent = `${passed}/${allModules.length} modules`;
     }
 
+    // Track which modules are expanded in sidebar (independent of active module)
+    const openModules = new Set();
+
     // ── Sidebar ───────────────────────────────────────────────────────────────
     function renderSidebar() {
       const container = document.getElementById("sidebar-modules");
@@ -191,28 +203,37 @@
         const status = isPreview ? "available" : getModuleStatus(allModules, progress, idx);
         const locked = status === "locked";
         const passed = status === "passed";
+        const isOpen = openModules.has(mod.id);
+        const isActive = currentModuleId === mod.id && currentView === "intro";
 
         const modDiv = document.createElement("div");
         modDiv.className = "mod-item";
         modDiv.id = `sidebar-mod-${mod.id}`;
 
         const numClass = passed ? "done" : (locked ? "locked" : "active");
-        const labelClass = passed ? "" : (locked ? "locked" : (currentModuleId === mod.id ? "active" : ""));
+        const labelClass = passed ? "" : (locked ? "locked" : (isActive ? "active" : ""));
 
         modDiv.innerHTML = `
-          <div class="mod-item-header ${currentModuleId===mod.id?"active":""}" id="modheader-${mod.id}" onclick="toggleModule('${mod.id}',${locked})">
+          <div class="mod-item-header ${isActive?"active":""}" id="modheader-${mod.id}">
             <div class="mod-num ${numClass}">${passed?"✓":idx+1}</div>
-            <div class="mod-label ${labelClass}">${mod.title||"Module "+(idx+1)}</div>
-            ${!locked?`<div class="mod-chevron ${currentModuleId===mod.id?"open":""}" id="modchev-${mod.id}">▾</div>`:""}
+            <div class="mod-label ${labelClass}"
+              style="cursor:${locked?"default":"pointer"};"
+              onclick="${locked ? "" : `selectModuleIntro('${mod.id}')`}"
+            >${mod.title||"Module "+(idx+1)}</div>
+            ${!locked ? `
+              <div class="mod-chevron ${isOpen?"open":""}" id="modchev-${mod.id}"
+                onclick="toggleModuleOpen('${mod.id}')"
+                style="cursor:pointer;padding:4px 6px;margin:-4px -6px;">▾</div>
+            ` : ""}
           </div>
-          <div class="submod-list ${currentModuleId===mod.id?"open":""}" id="submodlist-${mod.id}">
-            <div class="loading-wrap" style="min-height:60px;padding:1rem;" id="submod-loading-${mod.id}">
+          <div class="submod-list ${isOpen?"open":""}" id="submodlist-${mod.id}">
+            ${isOpen ? `<div class="loading-wrap" style="min-height:60px;padding:1rem;" id="submod-loading-${mod.id}">
               <div class="spinner" style="width:20px;height:20px;border-width:2px;"></div>
-            </div>
+            </div>` : ""}
           </div>`;
         container.appendChild(modDiv);
 
-        if (currentModuleId === mod.id) loadSubmoduleSidebar(mod.id);
+        if (isOpen) loadSubmoduleSidebar(mod.id);
       });
     }
 
@@ -243,15 +264,33 @@
       }
 
       submodules.forEach(sub => {
+        const isActiveSub = currentSubmoduleId===sub.id && currentView!=="subsection";
         const item = document.createElement("div");
-        item.className = `submod-item ${currentSubmoduleId===sub.id?"active":""}`;
+        item.className = `submod-item ${isActiveSub?"active":""}`;
         item.onclick = () => showSubmodule(moduleId, sub.id);
         item.innerHTML = `
           <div class="submod-dot ${viewedSubs.includes(sub.id)?"viewed":""}"></div>
-          <div class="submod-label ${currentSubmoduleId===sub.id?"active":""}">
+          <div class="submod-label ${isActiveSub?"active":""}">
             ${sub.order ? sub.order+"  " : ""}${sub.title||"Untitled"}
-          </div>`;
+          </div>
+          ${(sub.subsections||[]).length > 0 ? `<span style="font-size:10px;color:var(--text3);">▾</span>` : ""}`;
         list.appendChild(item);
+
+        // Sub-sub-modules (subsections) nested underneath
+        if ((sub.subsections||[]).length > 0) {
+          sub.subsections.forEach(ss => {
+            const isActiveSS = currentSubmoduleId===sub.id && currentView==="subsection" && window._activeSubsectionId===ss.id;
+            const ssItem = document.createElement("div");
+            ssItem.className = `subsub-item ${isActiveSS?"active":""}`;
+            ssItem.onclick = (e) => { e.stopPropagation(); showSubsection(moduleId, sub.id, ss.id); };
+            ssItem.innerHTML = `
+              <div class="subsub-dash ${isActiveSS?"active":""}"></div>
+              <div class="subsub-label ${isActiveSS?"active":""}">
+                ${ss.order ? ss.order+"  " : ""}${ss.title||"Untitled"}
+              </div>`;
+            list.appendChild(ssItem);
+          });
+        }
       });
 
       // Quiz item
@@ -270,19 +309,49 @@
       }
     }
 
+    // Click the title → load base page (doesn't affect open/close state)
+    window.selectModuleIntro = async function(moduleId) {
+      currentModuleId = moduleId;
+      currentSubmoduleId = null;
+      currentView = "intro";
+      // Also open it in sidebar if not already
+      if (!openModules.has(moduleId)) {
+        openModules.add(moduleId);
+      }
+      renderSidebar();
+      await loadSubmoduleSidebar(moduleId);
+      await showModuleIntro(moduleId);
+    };
+
+    // Click the arrow → toggle open/closed without changing the content area
+    window.toggleModuleOpen = async function(moduleId) {
+      if (openModules.has(moduleId)) {
+        openModules.delete(moduleId);
+        // Update just the chevron and list without full re-render
+        const chev = document.getElementById(`modchev-${moduleId}`);
+        const list = document.getElementById(`submodlist-${moduleId}`);
+        if (chev) chev.classList.remove("open");
+        if (list) list.classList.remove("open");
+      } else {
+        openModules.add(moduleId);
+        const chev = document.getElementById(`modchev-${moduleId}`);
+        const list = document.getElementById(`submodlist-${moduleId}`);
+        if (chev) chev.classList.add("open");
+        if (list) {
+          list.classList.add("open");
+          // Show spinner while loading
+          list.innerHTML = `<div class="loading-wrap" style="min-height:60px;padding:1rem;" id="submod-loading-${moduleId}">
+            <div class="spinner" style="width:20px;height:20px;border-width:2px;"></div>
+          </div>`;
+          await loadSubmoduleSidebar(moduleId);
+        }
+      }
+    };
+
+    // Keep old toggleModule as alias for preview auto-open
     window.toggleModule = async function(moduleId, locked) {
       if (locked) { showToast("Complete the previous module first.", "info"); return; }
-      const wasOpen = currentModuleId === moduleId;
-      currentModuleId = wasOpen ? null : moduleId;
-      currentSubmoduleId = null;
-      currentView = null;
-      renderSidebar();
-      if (!wasOpen) {
-        await loadSubmoduleSidebar(moduleId);
-        showModuleIntro(moduleId);
-      } else {
-        document.getElementById("content-area").innerHTML = `<div class="empty-module"><div style="font-size:2rem;">✦</div><p>Select a module from the sidebar to begin.</p></div>`;
-      }
+      await selectModuleIntro(moduleId);
     };
 
     // ── Fetch module data ─────────────────────────────────────────────────────
@@ -295,12 +364,24 @@
 
       const submodules = await Promise.all(subSnap.docs.map(async d => {
         const sub = {id:d.id,...d.data()};
-        const [subVidSnap, subImgSnap] = await Promise.all([
+        const [subVidSnap, subImgSnap, subSubSnap] = await Promise.all([
           getDocs(query(collection(db,"modules",moduleId,"submodules",d.id,"videos"),orderBy("order"))).catch(()=>({docs:[]})),
           getDocs(query(collection(db,"modules",moduleId,"submodules",d.id,"images"),orderBy("order"))).catch(()=>({docs:[]})),
+          getDocs(query(collection(db,"modules",moduleId,"submodules",d.id,"subsections"),orderBy("order"))).catch(()=>({docs:[]})),
         ]);
         sub.videos = subVidSnap.docs.map(v=>({id:v.id,...v.data()}));
         sub.images = subImgSnap.docs.map(i=>({id:i.id,...i.data()}));
+        // Load each sub-sub-module's videos and images
+        sub.subsections = await Promise.all(subSubSnap.docs.map(async ss => {
+          const ssData = {id:ss.id,...ss.data()};
+          const [ssVids, ssImgs] = await Promise.all([
+            getDocs(query(collection(db,"modules",moduleId,"submodules",d.id,"subsections",ss.id,"videos"),orderBy("order"))).catch(()=>({docs:[]})),
+            getDocs(query(collection(db,"modules",moduleId,"submodules",d.id,"subsections",ss.id,"images"),orderBy("order"))).catch(()=>({docs:[]})),
+          ]);
+          ssData.videos = ssVids.docs.map(v=>({id:v.id,...v.data()}));
+          ssData.images = ssImgs.docs.map(i=>({id:i.id,...i.data()}));
+          return ssData;
+        }));
         return sub;
       }));
 
@@ -377,6 +458,9 @@
       currentSubmoduleId = submoduleId;
       currentView = "submodule";
 
+      // Make sure this module is open in sidebar
+      openModules.add(moduleId);
+
       // Mark as viewed
       const viewedSubs = progress[moduleId]?.viewedSubmodules || [];
       if (!viewedSubs.includes(submoduleId)) {
@@ -442,7 +526,64 @@
       setupVideoPlayers();
     }
 
-    window.showVideos = async function(moduleId) {
+    // ── Show sub-sub-module (subsection) ──────────────────────────────────────
+    window.showSubsection = async function(moduleId, submoduleId, subsectionId) {
+      if (!moduleCache[moduleId]) await fetchModuleData(moduleId);
+      const cached = moduleCache[moduleId];
+      const sub = cached.submodules.find(s=>s.id===submoduleId);
+      const ss = sub?.subsections?.find(s=>s.id===subsectionId);
+      if (!ss) return;
+
+      currentModuleId = moduleId;
+      currentSubmoduleId = submoduleId;
+      currentView = "subsection";
+      window._activeSubsectionId = subsectionId;
+
+      renderSidebar();
+      await loadSubmoduleSidebar(moduleId);
+
+      let html = "";
+      if (ss.bannerImage) html += `<img src="${ss.bannerImage}" class="banner-hero" alt="${ss.title||""}"/>`;
+
+      if (isPreview) html += `<div style="margin-bottom:1rem;"><a href="admin.html" class="btn btn-ghost btn-sm">← Back to admin</a></div>`;
+
+      html += `<p style="font-family:var(--cinzel);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;font-style:normal;">${ss.order||""}</p>`;
+      html += `<h1 class="gold-text" style="margin-bottom:1rem;">${ss.title||""}</h1>`;
+      if (ss.description) html += `<p style="margin-bottom:1.5rem;">${ss.description}</p>`;
+
+      if (ss.content) {
+        ss.content.split("\n\n").filter(b=>b.trim()).forEach(b => { html += renderContentBlock(b); });
+      }
+
+      if (ss.images && ss.images.length > 0) {
+        ss.images.forEach(img => {
+          html += `<img src="${img.url}" class="content-img" alt="${img.caption||""}"/>`;
+          if (img.caption) html += `<p class="content-img-caption">${img.caption}</p>`;
+        });
+      }
+
+      if (ss.videos && ss.videos.length > 0) {
+        html += `<div class="ornament"><div class="ornament-line"></div><div class="ornament-diamond"></div><div class="ornament-line"></div></div>`;
+        html += renderVideosSection(ss.videos, moduleId, subsectionId);
+      }
+
+      // Prev/next nav within subsections
+      const ssIdx = sub.subsections.indexOf(ss);
+      const prevSS = sub.subsections[ssIdx-1];
+      const nextSS = sub.subsections[ssIdx+1];
+      html += `<div class="ornament" style="margin-top:2rem;"><div class="ornament-line"></div><div class="ornament-diamond"></div><div class="ornament-line"></div></div>`;
+      html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;">`;
+      html += prevSS
+        ? `<button class="btn btn-ghost" onclick="showSubsection('${moduleId}','${submoduleId}','${prevSS.id}')">← ${prevSS.title}</button>`
+        : `<button class="btn btn-ghost" onclick="showSubmodule('${moduleId}','${submoduleId}')">← ${sub.title}</button>`;
+      if (nextSS) {
+        html += `<button class="btn btn-primary" onclick="showSubsection('${moduleId}','${submoduleId}','${nextSS.id}')">${nextSS.title} →</button>`;
+      }
+      html += `</div>`;
+
+      document.getElementById("content-area").innerHTML = html;
+      setupVideoPlayers();
+    };
       if (!moduleCache[moduleId]) await fetchModuleData(moduleId);
       const cached = moduleCache[moduleId];
       currentSubmoduleId = "videos";
